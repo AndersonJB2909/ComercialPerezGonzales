@@ -37,5 +37,13 @@ public class Producto : INotifyPropertyChanged
 
     public string? CategoriaNombre { get; set; }
 
+    public ProductoConversion? Conversion { get; set; }
+
+    public decimal StockEfectivo => Conversion != null
+        ? Math.Floor(Conversion.StockBase / Conversion.Factor)
+        : Stock;
+
+    public bool EsDerivado => Conversion != null;
+
     public override string ToString() => $"[{Codigo}] {Nombre}";
 }
