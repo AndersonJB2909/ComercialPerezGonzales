@@ -97,8 +97,25 @@
                     <DataGridTextColumn Header="Nombre" Binding="{Binding Nombre}" Width="*"/>
                     <DataGridTextColumn Header="Categoría" Binding="{Binding CategoriaNombre}" Width="130"/>
                     <DataGridTextColumn Header="Precio Venta" Binding="{Binding PrecioVenta, StringFormat=${0:N2}}" Width="110"/>
-                    <DataGridTextColumn Header="Stock" Binding="{Binding Stock, StringFormat={}{0:N2}}" Width="80"/>
+                    <DataGridTextColumn Header="Stock" Binding="{Binding StockEfectivo, StringFormat={}{0:N2}}" Width="80"/>
                     <DataGridTextColumn Header="Unidad" Binding="{Binding UnidadMedida}" Width="80"/>
+                    <DataGridTemplateColumn Header="Conversión" Width="160">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Foreground="#22C55E" FontSize="13" VerticalAlignment="Center" Margin="12,0">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding EsDerivado}" Value="True">
+                                                    <Setter Property="Text" Value="{Binding Conversion.ProductoBaseNombre, StringFormat='Base: {0}'}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
                 </DataGrid.Columns>
             </DataGrid>
 
@@ -190,6 +207,67 @@
                                          BorderBrush="#166534" Padding="8,6" FontSize="16"/>
                             </StackPanel>
                         </Grid>
+
+                        <!-- Conversión de unidades -->
+                        <Border Background="#0D1B2A" CornerRadius="6" Padding="16" Margin="0,20,0,0">
+                            <StackPanel>
+                                <TextBlock Text="Conversión de unidades" Foreground="#22C55E"
+                                           FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
+
+                                <CheckBox Content="Es una presentación (paquete/caja) de otro producto"
+                                          IsChecked="{Binding DataContext.EsDerivado, RelativeSource={RelativeSource AncestorType=ScrollViewer}}"
+                                          Foreground="White" FontSize="15" Margin="0,0,0,12"/>
+
+                                <StackPanel Visibility="{Binding DataContext.EsDerivado,
+                                                RelativeSource={RelativeSource AncestorType=ScrollViewer},
+                                                Converter={StaticResource BoolToVisibility}}">
+
+                                    <Grid Margin="0,0,0,12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="16"/>
+                                            <ColumnDefinition Width="120"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="Producto base" Foreground="#888" FontSize="14" Margin="0,0,0,4"/>
+                                            <ComboBox ItemsSource="{Binding DataContext.ProductosBase, RelativeSource={RelativeSource AncestorType=ScrollViewer}}"
+                                                      SelectedValuePath="Id"
+                                                      SelectedValue="{Binding DataContext.ConversionEdit.ProductoBaseId, RelativeSource={RelativeSource AncestorType=ScrollViewer}}"
+                                                      DisplayMemberPath="Nombre"
+                                                      FontSize="15"
+                                                      Background="#152238" Foreground="White"/>
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="Factor (uds. base)" Foreground="#888" FontSize="14" Margin="0,0,0,4"/>
+                                            <TextBox Text="{Binding DataContext.ConversionEdit.Factor, RelativeSource={RelativeSource AncestorType=ScrollViewer}}"
+                                                     Background="#0D1B2A" Foreground="White"
+                                                     BorderBrush="#166534" Padding="8,6" FontSize="16"/>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button Command="{Binding DataContext.GuardarConversionCommand, RelativeSource={RelativeSource AncestorType=ScrollViewer}}"
+                                                Background="#166534" Foreground="White" BorderThickness="0"
+                                                Padding="12,8" Cursor="Hand" FontSize="14" Margin="0,0,8,0">
+                                            <StackPanel Orientation="Horizontal">
+                                                <iconPacks:PackIconMaterial Kind="LinkVariant" Width="14" Height="14" VerticalAlignment="Center"/>
+                                                <TextBlock Text=" Guardar conversión" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Command="{Binding DataContext.EliminarConversionCommand, RelativeSource={RelativeSource AncestorType=ScrollViewer}}"
+                                                Background="#7F1D1D" Foreground="White" BorderThickness="0"
+                                                Padding="12,8" Cursor="Hand" FontSize="14">
+                                            <StackPanel Orientation="Horizontal">
+                                                <iconPacks:PackIconMaterial Kind="LinkVariantOff" Width="14" Height="14" VerticalAlignment="Center"/>
+                                                <TextBlock Text=" Quitar conversión" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
 
                         <!-- Imagen del producto -->
                         <Border Background="#0D1B2A" CornerRadius="6" Padding="12" Margin="0,20,0,0">
