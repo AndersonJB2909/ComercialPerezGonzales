@@ -1,0 +1,17 @@
+# Build
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+# NuGet
+packages/
+*.nupkg
+
+# Logs
+*.log
+
+# SQLite local DB
+*.db
+*.sqlite

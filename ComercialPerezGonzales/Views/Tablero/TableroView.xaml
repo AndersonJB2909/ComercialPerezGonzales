@@ -1,0 +1,315 @@
+<UserControl x:Class="ComercialPerezGonzales.Views.Tablero.TableroView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks">
+
+    <Grid Background="#0D1B2A">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Toolbar -->
+        <Border Grid.Row="0" Background="#152238" Padding="16,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" Text="Tablero" Foreground="White"
+                           FontSize="22" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,20,0"/>
+
+                <!-- Selector de período -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0">
+                    <Button Command="{Binding PeriodoDiarioCommand}" Content="Diario"
+                            Foreground="White" BorderThickness="0" Padding="12,6" Cursor="Hand" FontSize="13">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Background" Value="#374151"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding EsDiario}" Value="True">
+                                        <Setter Property="Background" Value="#16A34A"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <Button Command="{Binding PeriodoSemanalCommand}" Content="Semanal"
+                            Foreground="White" BorderThickness="0" Padding="12,6" Cursor="Hand" FontSize="13" Margin="2,0,0,0">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Background" Value="#374151"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding EsSemanal}" Value="True">
+                                        <Setter Property="Background" Value="#16A34A"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <Button Command="{Binding PeriodoMensualCommand}" Content="Mensual"
+                            Foreground="White" BorderThickness="0" Padding="12,6" Cursor="Hand" FontSize="13" Margin="2,0,0,0">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Background" Value="#16A34A"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding EsMensual}" Value="True">
+                                        <Setter Property="Background" Value="#16A34A"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding EsMensual}" Value="False">
+                                        <Setter Property="Background" Value="#374151"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <Button Command="{Binding PeriodoAnualCommand}" Content="Anual"
+                            Foreground="White" BorderThickness="0" Padding="12,6" Cursor="Hand" FontSize="13" Margin="2,0,0,0">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Background" Value="#374151"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding EsAnual}" Value="True">
+                                        <Setter Property="Background" Value="#16A34A"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </StackPanel>
+
+                <!-- Selector de año -->
+                <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+                    <TextBlock Text="Año:" Foreground="#888" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <Button Command="{Binding AnioAnteriorCommand}"
+                            Background="#374151" Foreground="White" BorderThickness="0"
+                            Padding="10,6" Cursor="Hand" FontSize="18" FontWeight="Bold">&#x276E;</Button>
+                    <TextBlock Text="{Binding AnioSeleccionado}" Foreground="White"
+                               FontSize="17" FontWeight="Bold" VerticalAlignment="Center" Margin="12,0"/>
+                    <Button Command="{Binding AnioSiguienteCommand}"
+                            Background="#374151" Foreground="White" BorderThickness="0"
+                            Padding="10,6" Cursor="Hand" FontSize="18" FontWeight="Bold">&#x276F;</Button>
+                </StackPanel>
+
+                <Button Grid.Column="4" Command="{Binding ActualizarCommand}"
+                        Background="#16A34A" Foreground="White" BorderThickness="0"
+                        Padding="12,8" Cursor="Hand" FontSize="15">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial Kind="Refresh" Width="14" Height="14" VerticalAlignment="Center"/>
+                        <TextBlock Text=" Actualizar" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- Tarjetas resumen -->
+        <Border Grid.Row="1" Background="#0F1E30" Padding="16,12">
+            <StackPanel Orientation="Horizontal">
+
+                <Border Background="#152238" CornerRadius="8" Padding="20,12" Margin="0,0,12,0" MinWidth="150">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <iconPacks:PackIconMaterial Kind="Cash" Width="18" Height="18" Foreground="#4ADE80" VerticalAlignment="Center"/>
+                            <TextBlock Text=" Ventas Hoy" Foreground="#888" FontSize="14" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding ResumenHoy.TotalVentas}" Foreground="White"
+                                   FontSize="28" FontWeight="Bold" Margin="0,4,0,0"/>
+                        <TextBlock Foreground="#4ADE80" FontSize="15" FontWeight="SemiBold">
+                            <TextBlock.Text>
+                                <MultiBinding StringFormat="$ {0:N2}"><Binding Path="ResumenHoy.TotalIngresos"/></MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="#152238" CornerRadius="8" Padding="20,12" Margin="0,0,12,0" MinWidth="150">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <iconPacks:PackIconMaterial Kind="CalendarMonth" Width="18" Height="18" Foreground="#4ADE80" VerticalAlignment="Center"/>
+                            <TextBlock Text=" Este Mes" Foreground="#888" FontSize="14" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <TextBlock Foreground="White" FontSize="28" FontWeight="Bold" Margin="0,4,0,0">
+                            <TextBlock.Text>
+                                <MultiBinding StringFormat="$ {0:N2}"><Binding Path="TotalMes"/></MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
+                        <TextBlock Text="Total acumulado" Foreground="#4ADE80" FontSize="14"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="#152238" CornerRadius="8" Padding="20,12" Margin="0,0,12,0" MinWidth="150">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <iconPacks:PackIconMaterial Kind="ChartBar" Width="18" Height="18" Foreground="#F59E0B" VerticalAlignment="Center"/>
+                            <TextBlock Text=" Año" Foreground="#888" FontSize="14" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <TextBlock Foreground="White" FontSize="28" FontWeight="Bold" Margin="0,4,0,0">
+                            <TextBlock.Text>
+                                <MultiBinding StringFormat="$ {0:N2}"><Binding Path="TotalAnio"/></MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
+                        <TextBlock Text="{Binding AnioSeleccionado, StringFormat='Total {0}'}" Foreground="#F59E0B" FontSize="14"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="#152238" CornerRadius="8" Padding="20,12" MinWidth="150">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <iconPacks:PackIconMaterial Kind="CreditCard" Width="18" Height="18" Foreground="#A78BFA" VerticalAlignment="Center"/>
+                            <TextBlock Text=" Tarjeta Hoy" Foreground="#888" FontSize="14" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <TextBlock Foreground="White" FontSize="28" FontWeight="Bold" Margin="0,4,0,0">
+                            <TextBlock.Text>
+                                <MultiBinding StringFormat="$ {0:N2}"><Binding Path="ResumenHoy.TotalTarjeta"/></MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
+                        <TextBlock Foreground="#A78BFA" FontSize="15" FontWeight="SemiBold">
+                            <TextBlock.Text>
+                                <MultiBinding StringFormat="Efectivo: $ {0:N2}"><Binding Path="ResumenHoy.TotalEfectivo"/></MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Border>
+
+        <!-- Contenido principal -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Gráfico de barras mensual -->
+            <Border Grid.Column="0" Background="#0F1E30" Margin="12,12,6,12" CornerRadius="8" Padding="16">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Foreground="#22C55E" FontSize="17" FontWeight="SemiBold"
+                               Text="{Binding TituloGrafico}" Margin="0,0,0,12"/>
+
+                    <!-- Barras -->
+                    <ItemsControl Grid.Row="1" ItemsSource="{Binding VentasMensuales}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Rows="1"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid Grid.Row="0" VerticalAlignment="Bottom">
+                                        <Rectangle Fill="#16A34A" Height="{Binding BarHeight}"
+                                                   VerticalAlignment="Bottom" RadiusX="3" RadiusY="3"
+                                                   Margin="4,0"/>
+                                    </Grid>
+                                    <TextBlock Grid.Row="1" Text="{Binding NombreMes}"
+                                               Foreground="#888" FontSize="12" TextAlignment="Center"
+                                               Margin="0,4,0,0"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- Eje X -->
+                    <Rectangle Grid.Row="2" Height="1" Fill="#1A3A2A" Margin="0,0,0,24"/>
+                </Grid>
+            </Border>
+
+            <!-- Panel derecho: top productos y clientes -->
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Top Productos -->
+                <Border Grid.Row="0" Background="#0F1E30" Margin="6,12,12,6" CornerRadius="8" Padding="16">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Text="Top Productos (este mes)" Foreground="#22C55E"
+                                   FontSize="15" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                        <ItemsControl Grid.Row="1" ItemsSource="{Binding TopProductos}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Padding="0,5" BorderBrush="#1A2740" BorderThickness="0,0,0,1">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="{Binding Nombre}"
+                                                       Foreground="White" FontSize="14"
+                                                       TextTrimming="CharacterEllipsis"/>
+                                            <TextBlock Grid.Column="1" Foreground="#4ADE80" FontSize="14" FontWeight="Bold">
+                                                <TextBlock.Text>
+                                                    <MultiBinding StringFormat="{}{0:N0}x"><Binding Path="CantidadVendida"/></MultiBinding>
+                                                </TextBlock.Text>
+                                            </TextBlock>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Grid.Row="1" Text="Sin datos este mes"
+                                   Foreground="#555" FontSize="14" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                   Visibility="{Binding TopProductos.Count, Converter={StaticResource CountToInverseVisibility}}"/>
+                    </Grid>
+                </Border>
+
+                <!-- Top Clientes -->
+                <Border Grid.Row="1" Background="#0F1E30" Margin="6,6,12,12" CornerRadius="8" Padding="16">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Text="Top Clientes (este mes)" Foreground="#22C55E"
+                                   FontSize="15" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                        <ItemsControl Grid.Row="1" ItemsSource="{Binding TopClientes}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Padding="0,5" BorderBrush="#1A2740" BorderThickness="0,0,0,1">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="{Binding Nombre}"
+                                                       Foreground="White" FontSize="14"
+                                                       TextTrimming="CharacterEllipsis"/>
+                                            <TextBlock Grid.Column="1" Foreground="#4ADE80" FontSize="14" FontWeight="Bold">
+                                                <TextBlock.Text>
+                                                    <MultiBinding StringFormat="${0:N2}"><Binding Path="TotalComprado"/></MultiBinding>
+                                                </TextBlock.Text>
+                                            </TextBlock>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Grid.Row="1" Text="Sin datos este mes"
+                                   Foreground="#555" FontSize="14" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                   Visibility="{Binding TopClientes.Count, Converter={StaticResource CountToInverseVisibility}}"/>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+    </Grid>
+</UserControl>

@@ -1,0 +1,672 @@
+<UserControl x:Class="ComercialPerezGonzales.Views.CierreDia.CierreDiaView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks">
+
+    <Grid Background="#0D1B2A">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- ── Header ─────────────────────────────────────────────── -->
+        <Border Grid.Row="0" Background="#152238" Padding="16,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" Text="Finalizar Día"
+                           Foreground="White" FontSize="22" FontWeight="Bold"
+                           VerticalAlignment="Center" Margin="0,0,16,0"/>
+
+                <!-- Badge de estado -->
+                <Border Grid.Column="0" Margin="190,0,0,0"
+                        CornerRadius="4" Padding="10,4"
+                        VerticalAlignment="Center">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding MostrarCerrada}" Value="True">
+                                    <Setter Property="Background" Value="#1A3A2A"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding MostrarAbierta}" Value="True">
+                                    <Setter Property="Background" Value="#1A2E52"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding MostrarSinJornada}" Value="True">
+                                    <Setter Property="Background" Value="#2A2A14"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <TextBlock FontSize="12" FontWeight="Bold">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding MostrarCerrada}" Value="True">
+                                        <Setter Property="Text" Value="● CERRADA"/>
+                                        <Setter Property="Foreground" Value="#22C55E"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding MostrarAbierta}" Value="True">
+                                        <Setter Property="Text" Value="● ABIERTA"/>
+                                        <Setter Property="Foreground" Value="#60A5FA"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding MostrarSinJornada}" Value="True">
+                                        <Setter Property="Text" Value="● SIN JORNADA"/>
+                                        <Setter Property="Foreground" Value="#F59E0B"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding MostrarConteo}" Value="True">
+                                        <Setter Property="Text" Value="● CONTEO"/>
+                                        <Setter Property="Foreground" Value="#F59E0B"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding MostrarResumen}" Value="True">
+                                        <Setter Property="Text" Value="● REVISANDO"/>
+                                        <Setter Property="Foreground" Value="#F59E0B"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </Border>
+
+                <TextBlock Grid.Column="2"
+                           Text="{Binding Jornada.FechaJornada, StringFormat='Jornada: {0}'}"
+                           Foreground="#888" FontSize="14" VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+
+        <!-- ── Body ────────────────────────────────────────────────── -->
+        <Grid Grid.Row="1" Margin="16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="400"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- ═══ COLUMNA IZQUIERDA: Resumen del día + Movimientos ═══ -->
+            <ScrollViewer Grid.Column="0" Margin="0,0,12,0" VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+
+                    <!-- Stats rápidos -->
+                    <Border Background="#152238" CornerRadius="8" Padding="16" Margin="0,0,0,12"
+                            Visibility="{Binding MostrarSinJornada, Converter={StaticResource InverseBoolToVisibility}}">
+                        <StackPanel>
+                            <TextBlock Text="Resumen del Día" Foreground="#22C55E"
+                                       FontSize="15" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                            <UniformGrid Columns="3" >
+                                <Border Background="#0D1B2A" CornerRadius="6" Padding="14,10" Margin="0,0,8,0">
+                                    <StackPanel>
+                                        <TextBlock Text="Ventas" Foreground="#888" FontSize="12" TextAlignment="Center"/>
+                                        <TextBlock Text="{Binding Jornada.CantidadVentas}"
+                                                   Foreground="White" FontSize="24" FontWeight="Bold"
+                                                   TextAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Background="#0D1B2A" CornerRadius="6" Padding="14,10" Margin="0,0,8,0">
+                                    <StackPanel>
+                                        <TextBlock Text="Total Cobrado" Foreground="#888" FontSize="12" TextAlignment="Center"/>
+                                        <TextBlock Text="{Binding Jornada.TotalNeto, StringFormat=${0:N2}}"
+                                                   Foreground="#4ADE80" FontSize="20" FontWeight="Bold"
+                                                   TextAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Background="#0D1B2A" CornerRadius="6" Padding="14,10">
+                                    <StackPanel>
+                                        <TextBlock Text="Efectivo" Foreground="#888" FontSize="12" TextAlignment="Center"/>
+                                        <TextBlock Text="{Binding Jornada.TotalEfectivo, StringFormat=${0:N2}}"
+                                                   Foreground="#4ADE80" FontSize="20" FontWeight="Bold"
+                                                   TextAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                            </UniformGrid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Movimientos manuales -->
+                    <Border Background="#152238" CornerRadius="8" Padding="16" Margin="0,0,0,12"
+                            Visibility="{Binding MostrarSinJornada, Converter={StaticResource InverseBoolToVisibility}}">
+                        <StackPanel>
+                            <TextBlock Text="Movimientos de Caja" Foreground="#22C55E"
+                                       FontSize="15" FontWeight="SemiBold" Margin="0,0,0,12"/>
+
+                            <DataGrid ItemsSource="{Binding Movimientos}"
+                                      AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
+                                      Background="#0D1B2A" Foreground="White" BorderThickness="0"
+                                      GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#1A2740"
+                                      RowBackground="#0D1B2A" AlternatingRowBackground="#0F1E30"
+                                      ColumnHeaderHeight="34" MaxHeight="200">
+                                <DataGrid.ColumnHeaderStyle>
+                                    <Style TargetType="DataGridColumnHeader">
+                                        <Setter Property="Background" Value="#152238"/>
+                                        <Setter Property="Foreground" Value="#22C55E"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                        <Setter Property="Padding" Value="8,0"/>
+                                    </Style>
+                                </DataGrid.ColumnHeaderStyle>
+                                <DataGrid.RowStyle>
+                                    <Style TargetType="DataGridRow">
+                                        <Setter Property="Foreground" Value="White"/>
+                                    </Style>
+                                </DataGrid.RowStyle>
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Hora" Width="70"
+                                        Binding="{Binding FechaHora, StringFormat=HH:mm}"/>
+                                    <DataGridTextColumn Header="Tipo" Width="80"
+                                        Binding="{Binding Tipo}"/>
+                                    <DataGridTextColumn Header="Concepto" Width="*"
+                                        Binding="{Binding Concepto}"/>
+                                    <DataGridTextColumn Header="Monto" Width="90"
+                                        Binding="{Binding Monto, StringFormat=${0:N2}}"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+
+                            <!-- Formulario agregar movimiento -->
+                            <Border Background="#0D1B2A" CornerRadius="6" Padding="12" Margin="0,12,0,0"
+                                    Visibility="{Binding MostrarCerrada, Converter={StaticResource InverseBoolToVisibility}}">
+                                <StackPanel>
+                                    <TextBlock Text="REGISTRAR MOVIMIENTO" Foreground="#888"
+                                               FontSize="11" FontWeight="Bold" Margin="0,0,0,10"/>
+                                    <Grid Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0" Margin="0,0,6,0">
+                                            <TextBlock Text="Tipo" Foreground="#888" FontSize="12" Margin="0,0,0,4"/>
+                                            <ComboBox SelectedValue="{Binding MovTipo}" Padding="8,6">
+                                                <ComboBoxItem Content="SALIDA" IsSelected="True"/>
+                                                <ComboBoxItem Content="ENTRADA"/>
+                                            </ComboBox>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Margin="6,0,0,0">
+                                            <TextBlock Text="Monto" Foreground="#888" FontSize="12" Margin="0,0,0,4"/>
+                                            <TextBox Text="{Binding MovMontoTexto, UpdateSourceTrigger=PropertyChanged}"
+                                                     Padding="8,6"/>
+                                        </StackPanel>
+                                    </Grid>
+                                    <StackPanel Margin="0,0,0,8">
+                                        <TextBlock Text="Concepto" Foreground="#888" FontSize="12" Margin="0,0,0,4"/>
+                                        <TextBox Text="{Binding MovConcepto, UpdateSourceTrigger=PropertyChanged}"
+                                                 Padding="8,6"/>
+                                    </StackPanel>
+                                    <Button Command="{Binding AgregarMovimientoCommand}"
+                                            Background="#374151" Foreground="White"
+                                            BorderThickness="0" Padding="12,8" Cursor="Hand"
+                                            HorizontalAlignment="Right">
+                                        <StackPanel Orientation="Horizontal">
+                                            <iconPacks:PackIconMaterial Kind="Plus" Width="12" Height="12"
+                                                                        VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                            <TextBlock Text="Registrar" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Alertas de stock (solo en resumen y cerrada) -->
+                    <Border Background="#2A1A0A" CornerRadius="8" Padding="16" Margin="0,0,0,12"
+                            Visibility="{Binding AlertasStock.Count, Converter={StaticResource CountToVisibility}, Mode=OneWay}">
+                        <StackPanel>
+                            <TextBlock Foreground="#F59E0B" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,12">
+                                <Run Text="⚠ Stock Mínimo Alcanzado ("/>
+                                <Run Text="{Binding AlertasStock.Count, Mode=OneWay}"/>
+                                <Run Text=" productos)"/>
+                            </TextBlock>
+                            <DataGrid ItemsSource="{Binding AlertasStock}"
+                                      AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
+                                      Background="#1A0E00" Foreground="White" BorderThickness="0"
+                                      GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#3A2800"
+                                      RowBackground="#1A0E00" AlternatingRowBackground="#1E1200"
+                                      ColumnHeaderHeight="30" MaxHeight="150">
+                                <DataGrid.ColumnHeaderStyle>
+                                    <Style TargetType="DataGridColumnHeader">
+                                        <Setter Property="Background" Value="#2A1800"/>
+                                        <Setter Property="Foreground" Value="#F59E0B"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                        <Setter Property="Padding" Value="8,0"/>
+                                    </Style>
+                                </DataGrid.ColumnHeaderStyle>
+                                <DataGrid.RowStyle>
+                                    <Style TargetType="DataGridRow">
+                                        <Setter Property="Foreground" Value="#FCD34D"/>
+                                    </Style>
+                                </DataGrid.RowStyle>
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Producto" Binding="{Binding Nombre}" Width="*"/>
+                                    <DataGridTextColumn Header="Stock" Binding="{Binding Stock, StringFormat={}{0:N0}}" Width="70"/>
+                                    <DataGridTextColumn Header="Mínimo" Binding="{Binding StockMinimo, StringFormat={}{0:N0}}" Width="70"/>
+                                    <DataGridTextColumn Header="Déficit" Binding="{Binding Deficit, StringFormat={}{0:N0}}" Width="70"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </StackPanel>
+                    </Border>
+
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- ═══ COLUMNA DERECHA: Panel de cierre (pasos) ═══ -->
+            <Border Grid.Column="1" Background="#152238" CornerRadius="8" Padding="24">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+
+                        <!-- Error global -->
+                        <Border Background="#2A0E0E" CornerRadius="6" Padding="12,10" Margin="0,0,0,16"
+                                Visibility="{Binding HayError, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock Text="{Binding ErrorMensaje}" Foreground="#FCA5A5"
+                                       FontSize="13" TextWrapping="Wrap"/>
+                        </Border>
+
+                        <!-- ─── PASO: Sin jornada ─────────────────────────────── -->
+                        <StackPanel Visibility="{Binding MostrarSinJornada, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock Text="No hay jornada abierta" Foreground="White"
+                                       FontSize="18" FontWeight="Bold" Margin="0,0,0,8"/>
+                            <TextBlock Text="Crea la jornada de hoy para comenzar a operar."
+                                       Foreground="#888" TextWrapping="Wrap" Margin="0,0,0,24"/>
+
+                            <TextBlock Text="Fondo Inicial" Foreground="#888" FontSize="13" Margin="0,0,0,6"/>
+                            <TextBox Text="{Binding FondoInicial, StringFormat={}{0:N2}, UpdateSourceTrigger=PropertyChanged}"
+                                     FontSize="18" FontWeight="Bold" Padding="12,10" Margin="0,0,0,20"
+                                     Foreground="White"/>
+
+                            <Button Command="{Binding CrearJornadaCommand}"
+                                    Background="#16A34A" Foreground="White"
+                                    BorderThickness="0" Padding="0,14" Cursor="Hand" FontSize="15">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <iconPacks:PackIconMaterial Kind="Cart" Width="16" Height="16"
+                                                                VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Abrir Jornada" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+
+                        <!-- ─── PASO: Jornada Abierta (inicio) ───────────────── -->
+                        <StackPanel Visibility="{Binding MostrarAbierta, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock Text="Jornada en Curso" Foreground="White"
+                                       FontSize="18" FontWeight="Bold" Margin="0,0,0,4"/>
+                            <TextBlock Foreground="#888" FontSize="13" Margin="0,0,0,24" TextWrapping="Wrap">
+                                <Run Text="Apertura:"/>
+                                <Run Text="{Binding Jornada.FechaApertura, StringFormat=HH:mm, Mode=OneWay}"/>
+                                <Run Text=" · Fondo inicial: $"/>
+                                <Run Text="{Binding Jornada.FondoInicial, StringFormat={}{0:N2}, Mode=OneWay}"/>
+                            </TextBlock>
+
+                            <!-- Desglose por método -->
+                            <TextBlock Text="Ventas por Método" Foreground="#888" FontSize="12"
+                                       FontWeight="Bold" Margin="0,0,0,10"/>
+                            <Grid Margin="0,0,0,20">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="1"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Efectivo" Foreground="#888" Padding="0,5"/>
+                                <TextBlock Grid.Row="0" Grid.Column="1"
+                                           Text="{Binding Jornada.TotalEfectivo, StringFormat=${0:N2}}"
+                                           Foreground="White" Padding="0,5" TextAlignment="Right"/>
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Tarjeta" Foreground="#888" Padding="0,5"/>
+                                <TextBlock Grid.Row="1" Grid.Column="1"
+                                           Text="{Binding Jornada.TotalTarjetas, StringFormat=${0:N2}}"
+                                           Foreground="White" Padding="0,5" TextAlignment="Right"/>
+
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Transferencia" Foreground="#888" Padding="0,5"/>
+                                <TextBlock Grid.Row="2" Grid.Column="1"
+                                           Text="{Binding Jornada.TotalTransferencias, StringFormat=${0:N2}}"
+                                           Foreground="White" Padding="0,5" TextAlignment="Right"/>
+
+                                <Border Grid.Row="3" Grid.ColumnSpan="2"
+                                        Background="#1A2740" Height="1" Margin="0,4"/>
+
+                                <TextBlock Grid.Row="4" Grid.Column="0" Text="TOTAL COBRADO"
+                                           Foreground="#22C55E" FontWeight="Bold" Padding="0,6"/>
+                                <TextBlock Grid.Row="4" Grid.Column="1"
+                                           Text="{Binding Jornada.TotalNeto, StringFormat=${0:N2}}"
+                                           Foreground="#4ADE80" FontWeight="Bold" FontSize="16"
+                                           Padding="0,6" TextAlignment="Right"/>
+                            </Grid>
+
+                            <Button Command="{Binding IniciarCierreCommand}"
+                                    Background="#B45309" Foreground="White"
+                                    BorderThickness="0" Padding="0,14" Cursor="Hand" FontSize="15">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <iconPacks:PackIconMaterial Kind="Lock" Width="16" Height="16"
+                                                                VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Proceder al Cierre" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+
+                        <!-- ─── PASO: Conteo a ciegas ─────────────────────────── -->
+                        <StackPanel Visibility="{Binding MostrarConteo, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock Text="Conteo de Efectivo" Foreground="White"
+                                       FontSize="18" FontWeight="Bold" Margin="0,0,0,8"/>
+                            <TextBlock Foreground="#888" TextWrapping="Wrap" Margin="0,0,0,24" FontSize="13">
+                                Cuente el efectivo físico en la caja y anote el total aquí.
+                                No se muestra el monto esperado hasta confirmar.
+                            </TextBlock>
+
+                            <TextBlock Text="Efectivo Físico Contado" Foreground="#888"
+                                       FontSize="13" Margin="0,0,0,6"/>
+                            <TextBox Text="{Binding EfectivoFisico, StringFormat={}{0:N2}, UpdateSourceTrigger=PropertyChanged}"
+                                     FontSize="28" FontWeight="Bold" Padding="12,10"
+                                     Foreground="White" Margin="0,0,0,24" TextAlignment="Right"/>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="8"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Button Grid.Column="0" Command="{Binding VolverCommand}"
+                                        Background="#374151" Foreground="White"
+                                        BorderThickness="0" Padding="0,12" Cursor="Hand">
+                                    Cancelar
+                                </Button>
+                                <Button Grid.Column="2" Command="{Binding CalcularResumenCommand}"
+                                        Background="#16A34A" Foreground="White"
+                                        BorderThickness="0" Padding="0,12" Cursor="Hand" FontSize="14">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <iconPacks:PackIconMaterial Kind="ChartLine" Width="14" Height="14"
+                                                                    VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                        <TextBlock Text="Ver Resumen" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+                        </StackPanel>
+
+                        <!-- ─── PASO: Resumen conciliación ───────────────────── -->
+                        <StackPanel Visibility="{Binding MostrarResumen, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock Text="Resumen de Conciliación" Foreground="White"
+                                       FontSize="18" FontWeight="Bold" Margin="0,0,0,20"/>
+
+                            <!-- Tabla conciliación -->
+                            <Grid Margin="0,0,0,16">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="1"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="1"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Fondo inicial" Foreground="#888" Padding="0,5"/>
+                                <TextBlock Grid.Row="0" Grid.Column="1"
+                                           Text="{Binding Jornada.FondoInicial, StringFormat=${0:N2}}"
+                                           Foreground="White" TextAlignment="Right" Padding="0,5"/>
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="(+) Ventas efectivo" Foreground="#888" Padding="0,5"/>
+                                <TextBlock Grid.Row="1" Grid.Column="1"
+                                           Text="{Binding Resumen.Totales.Efectivo, StringFormat=${0:N2}}"
+                                           Foreground="#4ADE80" TextAlignment="Right" Padding="0,5"/>
+
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="(+) Entradas extra" Foreground="#888" Padding="0,5"/>
+                                <TextBlock Grid.Row="2" Grid.Column="1"
+                                           Text="{Binding Resumen.EntradasExtra, StringFormat=${0:N2}}"
+                                           Foreground="#4ADE80" TextAlignment="Right" Padding="0,5"/>
+
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="(-) Salidas" Foreground="#888" Padding="0,5"/>
+                                <TextBlock Grid.Row="3" Grid.Column="1"
+                                           Text="{Binding Resumen.SalidasEfectivo, StringFormat=${0:N2}}"
+                                           Foreground="#FCA5A5" TextAlignment="Right" Padding="0,5"/>
+
+                                <Border Grid.Row="4" Grid.ColumnSpan="2" Background="#1A2740" Height="1" Margin="0,4"/>
+
+                                <TextBlock Grid.Row="5" Grid.Column="0" Text="Efectivo esperado" Foreground="#888" Padding="0,5"/>
+                                <TextBlock Grid.Row="5" Grid.Column="1"
+                                           Text="{Binding Resumen.EfectivoEsperado, StringFormat=${0:N2}}"
+                                           Foreground="White" FontWeight="Bold" TextAlignment="Right" Padding="0,5"/>
+
+                                <TextBlock Grid.Row="6" Grid.Column="0" Text="Efectivo contado" Foreground="#888" Padding="0,5"/>
+                                <TextBlock Grid.Row="6" Grid.Column="1"
+                                           Text="{Binding Resumen.EfectivoReal, StringFormat=${0:N2}}"
+                                           Foreground="White" FontWeight="Bold" TextAlignment="Right" Padding="0,5"/>
+
+                                <Border Grid.Row="7" Grid.ColumnSpan="2" Background="#1A2740" Height="1" Margin="0,4"/>
+
+                                <TextBlock Grid.Row="8" Grid.Column="0" Text="DIFERENCIA"
+                                           Foreground="White" FontWeight="Bold" FontSize="15" Padding="0,8"/>
+                                <TextBlock Grid.Row="8" Grid.Column="1"
+                                           Text="{Binding Resumen.Diferencia, StringFormat=${0:N2}}"
+                                           FontWeight="Bold" FontSize="15" TextAlignment="Right" Padding="0,8">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#4ADE80"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Resumen.EstadoConciliacion}" Value="FALTANTE">
+                                                    <Setter Property="Foreground" Value="#F87171"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Resumen.EstadoConciliacion}" Value="CUADRADO">
+                                                    <Setter Property="Foreground" Value="#4ADE80"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Grid>
+
+                            <!-- Estado conciliación badge -->
+                            <Border CornerRadius="6" Padding="12,8" Margin="0,0,0,20" HorizontalAlignment="Stretch">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="#1A3A2A"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Resumen.EstadoConciliacion}" Value="FALTANTE">
+                                                <Setter Property="Background" Value="#2A1010"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Resumen.EstadoConciliacion}" Value="SOBRANTE">
+                                                <Setter Property="Background" Value="#1A2A10"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock TextAlignment="Center" FontWeight="Bold" FontSize="15">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Text" Value="✓ CAJA CUADRADA"/>
+                                            <Setter Property="Foreground" Value="#4ADE80"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Resumen.EstadoConciliacion}" Value="FALTANTE">
+                                                    <Setter Property="Text" Value="✗ CAJA CON FALTANTE"/>
+                                                    <Setter Property="Foreground" Value="#F87171"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Resumen.EstadoConciliacion}" Value="SOBRANTE">
+                                                    <Setter Property="Text" Value="↑ CAJA CON SOBRANTE"/>
+                                                    <Setter Property="Foreground" Value="#FCD34D"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Border>
+
+                            <!-- Desglose ventas -->
+                            <TextBlock Text="Ventas por Método" Foreground="#888" FontSize="12"
+                                       FontWeight="Bold" Margin="0,0,0,8"/>
+                            <Grid Margin="0,0,0,20">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Tarjeta" Foreground="#888" Padding="0,4"/>
+                                <TextBlock Grid.Row="0" Grid.Column="1"
+                                           Text="{Binding Resumen.Totales.Tarjetas, StringFormat=${0:N2}}"
+                                           Foreground="White" TextAlignment="Right" Padding="0,4"/>
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Transferencia" Foreground="#888" Padding="0,4"/>
+                                <TextBlock Grid.Row="1" Grid.Column="1"
+                                           Text="{Binding Resumen.Totales.Transferencias, StringFormat=${0:N2}}"
+                                           Foreground="White" TextAlignment="Right" Padding="0,4"/>
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Impuesto total" Foreground="#888" Padding="0,4"/>
+                                <TextBlock Grid.Row="2" Grid.Column="1"
+                                           Text="{Binding Resumen.Totales.Impuesto, StringFormat=${0:N2}}"
+                                           Foreground="White" TextAlignment="Right" Padding="0,4"/>
+                            </Grid>
+
+                            <!-- Observaciones -->
+                            <TextBlock Text="Observaciones (opcional)" Foreground="#888"
+                                       FontSize="12" Margin="0,0,0,6"/>
+                            <TextBox Text="{Binding Observaciones, UpdateSourceTrigger=PropertyChanged}"
+                                     Padding="8,8" TextWrapping="Wrap" Height="60"
+                                     AcceptsReturn="True" Margin="0,0,0,20" VerticalScrollBarVisibility="Auto"/>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="8"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Button Grid.Column="0" Command="{Binding VolverCommand}"
+                                        Background="#374151" Foreground="White"
+                                        BorderThickness="0" Padding="0,12" Cursor="Hand">
+                                    Volver
+                                </Button>
+                                <Button Grid.Column="2" Command="{Binding ConfirmarCierreCommand}"
+                                        Background="#DC2626" Foreground="White"
+                                        BorderThickness="0" Padding="0,12" Cursor="Hand" FontSize="14">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <iconPacks:PackIconMaterial Kind="Lock" Width="14" Height="14"
+                                                                    VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                        <TextBlock Text="Confirmar Cierre" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+                        </StackPanel>
+
+                        <!-- ─── PASO: Jornada Cerrada (reporte) ──────────────── -->
+                        <StackPanel Visibility="{Binding MostrarCerrada, Converter={StaticResource BoolToVisibility}}">
+                            <Border Background="#0A2518" CornerRadius="8" Padding="16" Margin="0,0,0,20">
+                                <StackPanel>
+                                    <TextBlock Text="✓ Jornada Cerrada" Foreground="#4ADE80"
+                                               FontSize="18" FontWeight="Bold" Margin="0,0,0,4"/>
+                                    <TextBlock Foreground="#6EC99E" FontSize="13">
+                                        <Run Text="Cerrada a las"/>
+                                        <Run Text="{Binding Jornada.FechaCierre, StringFormat=HH:mm, Mode=OneWay}"/>
+                                        <Run Text="por"/>
+                                        <Run Text="{Binding Jornada.UsuarioCierre, Mode=OneWay}"/>
+                                    </TextBlock>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Resumen final -->
+                            <Grid Margin="0,0,0,16">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="1"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="1"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Ventas realizadas" Foreground="#888" Padding="0,5"/>
+                                <TextBlock Grid.Row="0" Grid.Column="1"
+                                           Text="{Binding Jornada.CantidadVentas}"
+                                           Foreground="White" TextAlignment="Right" Padding="0,5"/>
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Total cobrado" Foreground="#888" Padding="0,5"/>
+                                <TextBlock Grid.Row="1" Grid.Column="1"
+                                           Text="{Binding Jornada.TotalNeto, StringFormat=${0:N2}}"
+                                           Foreground="#4ADE80" FontWeight="Bold" TextAlignment="Right" Padding="0,5"/>
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Impuesto recaudado" Foreground="#888" Padding="0,5"/>
+                                <TextBlock Grid.Row="2" Grid.Column="1"
+                                           Text="{Binding Jornada.TotalImpuesto, StringFormat=${0:N2}}"
+                                           Foreground="White" TextAlignment="Right" Padding="0,5"/>
+
+                                <Border Grid.Row="3" Grid.ColumnSpan="2" Background="#1A2740" Height="1" Margin="0,4"/>
+
+                                <TextBlock Grid.Row="4" Grid.Column="0" Text="Efectivo esperado" Foreground="#888" Padding="0,5"/>
+                                <TextBlock Grid.Row="4" Grid.Column="1"
+                                           Text="{Binding Jornada.EfectivoEsperado, StringFormat=${0:N2}}"
+                                           Foreground="White" TextAlignment="Right" Padding="0,5"/>
+                                <TextBlock Grid.Row="5" Grid.Column="0" Text="Efectivo contado" Foreground="#888" Padding="0,5"/>
+                                <TextBlock Grid.Row="5" Grid.Column="1"
+                                           Text="{Binding Jornada.EfectivoReal, StringFormat=${0:N2}}"
+                                           Foreground="White" TextAlignment="Right" Padding="0,5"/>
+
+                                <Border Grid.Row="6" Grid.ColumnSpan="2" Background="#1A2740" Height="1" Margin="0,4"/>
+
+                                <TextBlock Grid.Row="7" Grid.Column="0" Text="DIFERENCIA"
+                                           Foreground="White" FontWeight="Bold" FontSize="15" Padding="0,8"/>
+                                <TextBlock Grid.Row="7" Grid.Column="1"
+                                           Text="{Binding Jornada.Diferencia, StringFormat=${0:N2}}"
+                                           FontWeight="Bold" FontSize="15" TextAlignment="Right" Padding="0,8">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#4ADE80"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Jornada.EstadoConciliacion}" Value="FALTANTE">
+                                                    <Setter Property="Foreground" Value="#F87171"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Grid>
+
+                            <Border CornerRadius="6" Padding="12,8" Margin="0,0,0,16" HorizontalAlignment="Stretch">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="#1A3A2A"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Jornada.EstadoConciliacion}" Value="FALTANTE">
+                                                <Setter Property="Background" Value="#2A1010"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock Text="{Binding Jornada.EstadoConciliacion}"
+                                           TextAlignment="Center" FontWeight="Bold" FontSize="14">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#4ADE80"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Jornada.EstadoConciliacion}" Value="FALTANTE">
+                                                    <Setter Property="Foreground" Value="#F87171"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Jornada.EstadoConciliacion}" Value="SOBRANTE">
+                                                    <Setter Property="Foreground" Value="#FCD34D"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Border>
+
+                            <TextBlock Text="{Binding Jornada.Observaciones}"
+                                       Foreground="#888" FontSize="12" TextWrapping="Wrap"
+                                       Visibility="{Binding Jornada.Observaciones, Converter={StaticResource StringToVisibility}}"/>
+                        </StackPanel>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+
+        </Grid>
+    </Grid>
+</UserControl>
