@@ -37,6 +37,7 @@ public partial class App : Application
         services.AddSingleton(new DatabaseContext(dbPath));
         services.AddSingleton<DatabaseInitializer>();
         services.AddSingleton<ProductoRepository>();
+        services.AddSingleton<ProductoConversionRepository>();
         services.AddSingleton<CategoriaRepository>();
         services.AddSingleton<ClienteRepository>();
         services.AddSingleton<VentaRepository>();
@@ -44,6 +45,7 @@ public partial class App : Application
         services.AddSingleton<CierreCajaRepository>();
 
         services.AddSingleton<ProductoService>();
+        services.AddSingleton<ProductoConversionService>();
         services.AddSingleton<ClienteService>();
         services.AddSingleton<VentaService>();
         services.AddSingleton<ReporteService>();

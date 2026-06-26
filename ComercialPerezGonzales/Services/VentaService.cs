@@ -8,12 +8,15 @@ public class VentaService
     private readonly VentaRepository _ventaRepo;
     private readonly ProductoRepository _productoRepo;
     private readonly ConfiguracionRepository _configRepo;
+    private readonly ProductoConversionService _conversionService;
 
-    public VentaService(VentaRepository ventaRepo, ProductoRepository productoRepo, ConfiguracionRepository configRepo)
+    public VentaService(VentaRepository ventaRepo, ProductoRepository productoRepo,
+        ConfiguracionRepository configRepo, ProductoConversionService conversionService)
     {
         _ventaRepo = ventaRepo;
         _productoRepo = productoRepo;
         _configRepo = configRepo;
+        _conversionService = conversionService;
     }
 
     public Venta ProcesarVenta(List<ItemCarrito> carrito, int? clienteId, string metodoPago, decimal montoRecibido, decimal descuentoGlobal = 0)
@@ -30,8 +33,8 @@ public class VentaService
             var producto = _productoRepo.GetById(item.ProductoId)
                 ?? throw new InvalidOperationException($"Producto ID {item.ProductoId} no encontrado.");
 
-            if (producto.Stock < item.Cantidad)
-                throw new InvalidOperationException($"Stock insuficiente para '{producto.Nombre}'. Disponible: {producto.Stock}");
+            // Valida stock (maneja derivados y base automáticamente)
+            _conversionService.ValidarStockSuficiente(item.ProductoId, item.Cantidad);
 
             var lineaSubtotal = item.Cantidad * item.PrecioUnit - item.Descuento;
             subtotal += lineaSubtotal;
@@ -71,6 +74,11 @@ public class VentaService
         };
 
         venta.Id = _ventaRepo.Insert(venta);
+
+        // Descontar stock (derivados descuentan del base)
+        foreach (var item in carrito)
+            _conversionService.DescontarStock(item.ProductoId, item.Cantidad);
+
         return venta;
     }
 
