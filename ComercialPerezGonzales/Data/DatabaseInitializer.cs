@@ -28,6 +28,25 @@ public class DatabaseInitializer
             m.ExecuteNonQuery();
         }
         catch { /* columna ya existe */ }
+
+        // Migración: tabla de conversiones de productos
+        try
+        {
+            using var m2 = conn.CreateCommand();
+            m2.CommandText = @"
+        CREATE TABLE IF NOT EXISTS producto_conversiones (
+            id               INTEGER PRIMARY KEY AUTOINCREMENT,
+            producto_id      INTEGER NOT NULL UNIQUE,
+            producto_base_id INTEGER NOT NULL,
+            factor           REAL    NOT NULL CHECK (factor > 0),
+            FOREIGN KEY (producto_id)      REFERENCES productos(id),
+            FOREIGN KEY (producto_base_id) REFERENCES productos(id),
+            CHECK (producto_id != producto_base_id)
+        );
+        CREATE INDEX IF NOT EXISTS idx_conv_base ON producto_conversiones(producto_base_id);";
+            m2.ExecuteNonQuery();
+        }
+        catch { /* tabla ya existe */ }
     }
 
     private static string GetSchema() => @"
