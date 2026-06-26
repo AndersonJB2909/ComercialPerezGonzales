@@ -11,12 +11,16 @@ namespace ComercialPerezGonzales.ViewModels.Inventario;
 public class ProductosViewModel : ViewModelBase
 {
     private readonly ProductoService _service;
+    private readonly ProductoConversionService _convService;
     private string _searchText = string.Empty;
     private Producto? _selected;
     private bool _modoEdicion;
+    private bool _esDerivado;
+    private ProductoConversion? _conversionEdit;
 
     public ObservableCollection<Producto> Productos { get; } = new();
     public ObservableCollection<Categoria> Categorias { get; } = new();
+    public ObservableCollection<Producto> ProductosBase { get; } = new();
 
     public Producto? Selected
     {
@@ -36,6 +40,18 @@ public class ProductosViewModel : ViewModelBase
         set => SetProperty(ref _modoEdicion, value);
     }
 
+    public bool EsDerivado
+    {
+        get => _esDerivado;
+        set => SetProperty(ref _esDerivado, value);
+    }
+
+    public ProductoConversion? ConversionEdit
+    {
+        get => _conversionEdit;
+        set => SetProperty(ref _conversionEdit, value);
+    }
+
     public Producto? ProductoEdit { get; set; }
 
     public RelayCommand NuevoCommand { get; }
@@ -45,10 +61,13 @@ public class ProductosViewModel : ViewModelBase
     public RelayCommand CancelarCommand { get; }
     public RelayCommand SeleccionarImagenCommand { get; }
     public RelayCommand QuitarImagenCommand { get; }
+    public RelayCommand GuardarConversionCommand { get; }
+    public RelayCommand EliminarConversionCommand { get; }
 
-    public ProductosViewModel(ProductoService service)
+    public ProductosViewModel(ProductoService service, ProductoConversionService convService)
     {
         _service = service;
+        _convService = convService;
         NuevoCommand = new RelayCommand(Nuevo);
         EditarCommand = new RelayCommand(Editar, () => Selected != null);
         EliminarCommand = new RelayCommand(Eliminar, () => Selected != null);
@@ -56,6 +75,8 @@ public class ProductosViewModel : ViewModelBase
         CancelarCommand = new RelayCommand(() => ModoEdicion = false);
         SeleccionarImagenCommand = new RelayCommand(SeleccionarImagen);
         QuitarImagenCommand = new RelayCommand(QuitarImagen, () => !string.IsNullOrEmpty(ProductoEdit?.ImagenPath));
+        GuardarConversionCommand = new RelayCommand(GuardarConversion);
+        EliminarConversionCommand = new RelayCommand(EliminarConversion, () => ConversionEdit?.Id > 0);
         Cargar();
     }
 
@@ -69,11 +90,24 @@ public class ProductosViewModel : ViewModelBase
         foreach (var c in _service.GetCategorias()) Categorias.Add(c);
     }
 
+    private void CargarProductosBase(int? excluirId = null)
+    {
+        ProductosBase.Clear();
+        // Solo productos que NO son derivados pueden ser base
+        foreach (var p in _service.GetAll())
+        {
+            if (excluirId.HasValue && p.Id == excluirId.Value) continue;
+            if (!p.EsDerivado) ProductosBase.Add(p);
+        }
+    }
+
     private void Buscar() => Cargar();
 
     private void Nuevo()
     {
         ProductoEdit = new Producto();
+        EsDerivado = false;
+        ConversionEdit = null;
         ModoEdicion = true;
         OnPropertyChanged(nameof(ProductoEdit));
     }
@@ -89,6 +123,26 @@ public class ProductosViewModel : ViewModelBase
             StockMinimo = Selected.StockMinimo, CategoriaId = Selected.CategoriaId,
             UnidadMedida = Selected.UnidadMedida, Activo = Selected.Activo
         };
+
+        var conv = Selected.Conversion;
+        if (conv != null)
+        {
+            EsDerivado = true;
+            ConversionEdit = new ProductoConversion
+            {
+                Id = conv.Id,
+                ProductoId = conv.ProductoId,
+                ProductoBaseId = conv.ProductoBaseId,
+                Factor = conv.Factor
+            };
+        }
+        else
+        {
+            EsDerivado = false;
+            ConversionEdit = null;
+        }
+
+        CargarProductosBase(ProductoEdit.Id);
         ModoEdicion = true;
         OnPropertyChanged(nameof(ProductoEdit));
     }
@@ -106,6 +160,50 @@ public class ProductosViewModel : ViewModelBase
         {
             MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
+    }
+
+    private void GuardarConversion()
+    {
+        if (ProductoEdit == null || ProductoEdit.Id == 0)
+        {
+            MessageBox.Show("Guarda el producto primero antes de configurar la conversión.", "Atención", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+        if (!EsDerivado)
+        {
+            // Si estaba configurado como derivado y ahora no, eliminar la conversión
+            _convService.Eliminar(ProductoEdit.Id);
+            ConversionEdit = null;
+            Cargar();
+            return;
+        }
+        if (ConversionEdit == null || ConversionEdit.ProductoBaseId == 0)
+        {
+            MessageBox.Show("Selecciona el producto base y el factor de conversión.", "Atención", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+        try
+        {
+            ConversionEdit.ProductoId = ProductoEdit.Id;
+            _convService.Guardar(ConversionEdit);
+            MessageBox.Show("Conversión guardada correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+            Cargar();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    private void EliminarConversion()
+    {
+        if (ProductoEdit == null) return;
+        var r = MessageBox.Show("¿Quitar la relación de conversión? El producto quedará independiente.", "Confirmar", MessageBoxButton.YesNo, MessageBoxImage.Question);
+        if (r != MessageBoxResult.Yes) return;
+        _convService.Eliminar(ProductoEdit.Id);
+        EsDerivado = false;
+        ConversionEdit = null;
+        Cargar();
     }
 
     private void SeleccionarImagen()
@@ -147,7 +245,6 @@ public class ProductosViewModel : ViewModelBase
 
     private static byte[] ComprimirImagen(byte[] original, int maxBytes)
     {
-        // Intenta reducir calidad JPEG primero
         for (int calidad = 80; calidad >= 30; calidad -= 10)
         {
             var comprimido = CodificarJpeg(original, calidad);
@@ -155,13 +252,10 @@ public class ProductosViewModel : ViewModelBase
                 return comprimido;
         }
 
-        // Si aún es grande, reduce resolución a la mitad y reintenta
         try
         {
             using var ms = new MemoryStream(original);
             var src = BitmapFrame.Create(ms, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
-            int w = src.PixelWidth / 2;
-            int h = src.PixelHeight / 2;
             var scaled = new TransformedBitmap(src, new System.Windows.Media.ScaleTransform(0.5, 0.5));
             var encoder = new JpegBitmapEncoder { QualityLevel = 60 };
             encoder.Frames.Add(BitmapFrame.Create(scaled));
@@ -200,8 +294,15 @@ public class ProductosViewModel : ViewModelBase
         var r = MessageBox.Show($"¿Eliminar '{Selected.Nombre}'?", "Confirmar", MessageBoxButton.YesNo, MessageBoxImage.Question);
         if (r == MessageBoxResult.Yes)
         {
-            _service.Eliminar(Selected.Id);
-            Cargar();
+            try
+            {
+                _service.Eliminar(Selected.Id);
+                Cargar();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
         }
     }
 }
