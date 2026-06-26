@@ -19,8 +19,8 @@
             <Setter Property="FontSize" Value="14"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#16532D"/>
-                    <Setter Property="Foreground" Value="#22C55E"/>
+                    <Setter Property="Background" Value="#22C55E"/>
+                    <Setter Property="Foreground" Value="White"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
