@@ -36,5 +36,11 @@ public class ProductoService
         return p.Id;
     }
 
-    public void Eliminar(int id) => _repo.Delete(id);
+    public void Eliminar(int id)
+    {
+        if (_repo.TieneDerivados(id))
+            throw new InvalidOperationException(
+                "No se puede eliminar este producto porque otros productos lo usan como base. Elimina primero los productos derivados.");
+        _repo.Delete(id);
+    }
 }
