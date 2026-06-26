@@ -66,13 +66,15 @@ public class ProductoRepository
     public IEnumerable<Producto> GetByCategoria(int categoriaId)
     {
         using var conn = _context.CreateConnection();
-        return conn.Query<Producto>(@"
+        var productos = conn.Query<Producto>(@"
             SELECT p.*, c.nombre as CategoriaNombre
             FROM productos p
             LEFT JOIN categorias c ON p.categoria_id = c.id
             WHERE p.activo = 1 AND p.categoria_id = @categoriaId
             ORDER BY p.nombre",
-            new { categoriaId });
+            new { categoriaId }).ToList();
+        CargarConversiones(productos);
+        return productos;
     }
 
     public int Insert(Producto p)
@@ -113,11 +115,13 @@ public class ProductoRepository
     public IEnumerable<Producto> GetBajoStock()
     {
         using var conn = _context.CreateConnection();
-        return conn.Query<Producto>(@"
+        var productos = conn.Query<Producto>(@"
             SELECT p.*, c.nombre as CategoriaNombre FROM productos p
             LEFT JOIN categorias c ON p.categoria_id = c.id
             WHERE p.activo = 1 AND p.stock <= p.stock_minimo
-            ORDER BY p.stock ASC");
+            ORDER BY p.stock ASC").ToList();
+        CargarConversiones(productos);
+        return productos;
     }
 
     public bool TieneDerivados(int id)

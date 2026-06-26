@@ -5,6 +5,7 @@ namespace ComercialPerezGonzales.Services;
 
 public class VentaService
 {
+    private static readonly object _ventaLock = new();
     private readonly VentaRepository _ventaRepo;
     private readonly ProductoRepository _productoRepo;
     private readonly ConfiguracionRepository _configRepo;
@@ -23,63 +24,66 @@ public class VentaService
     {
         if (!carrito.Any()) throw new InvalidOperationException("El carrito está vacío.");
 
-        var impuestoPct = decimal.Parse(_configRepo.GetValor("impuesto_porcentaje") ?? "0");
-
-        var detalles = new List<DetalleVenta>();
-        decimal subtotal = 0;
-
-        foreach (var item in carrito)
+        lock (_ventaLock)
         {
-            var producto = _productoRepo.GetById(item.ProductoId)
-                ?? throw new InvalidOperationException($"Producto ID {item.ProductoId} no encontrado.");
+            var impuestoPct = decimal.Parse(_configRepo.GetValor("impuesto_porcentaje") ?? "0");
 
-            // Valida stock (maneja derivados y base automáticamente)
-            _conversionService.ValidarStockSuficiente(item.ProductoId, item.Cantidad);
+            var detalles = new List<DetalleVenta>();
+            decimal subtotal = 0;
 
-            var lineaSubtotal = item.Cantidad * item.PrecioUnit - item.Descuento;
-            subtotal += lineaSubtotal;
-
-            detalles.Add(new DetalleVenta
+            foreach (var item in carrito)
             {
-                ProductoId = item.ProductoId,
-                ProductoNombre = producto.Nombre,
-                Cantidad = item.Cantidad,
-                PrecioUnit = item.PrecioUnit,
-                Descuento = item.Descuento,
-                Subtotal = lineaSubtotal
-            });
+                var producto = _productoRepo.GetById(item.ProductoId)
+                    ?? throw new InvalidOperationException($"Producto ID {item.ProductoId} no encontrado.");
+
+                // Valida stock con lectura fresca (maneja derivados y base automáticamente)
+                _conversionService.ValidarStockSuficiente(item.ProductoId, item.Cantidad);
+
+                var lineaSubtotal = item.Cantidad * item.PrecioUnit - item.Descuento;
+                subtotal += lineaSubtotal;
+
+                detalles.Add(new DetalleVenta
+                {
+                    ProductoId = item.ProductoId,
+                    ProductoNombre = producto.Nombre,
+                    Cantidad = item.Cantidad,
+                    PrecioUnit = item.PrecioUnit,
+                    Descuento = item.Descuento,
+                    Subtotal = lineaSubtotal
+                });
+            }
+
+            var baseImponible = subtotal - descuentoGlobal;
+            var impuesto = Math.Round(baseImponible * (impuestoPct / 100), 2);
+            var total = baseImponible + impuesto;
+            var cambio = montoRecibido - total;
+
+            if (montoRecibido < total && metodoPago == "EFECTIVO")
+                throw new InvalidOperationException($"Monto insuficiente. Falta: {total - montoRecibido:F2}");
+
+            var venta = new Venta
+            {
+                Numero = _ventaRepo.GetNextNumero(),
+                ClienteId = clienteId,
+                Subtotal = subtotal,
+                Descuento = descuentoGlobal,
+                Impuesto = impuesto,
+                Total = total,
+                MetodoPago = metodoPago,
+                MontoRecibido = montoRecibido,
+                Cambio = Math.Max(0, cambio),
+                Estado = "COMPLETADA",
+                Detalles = detalles
+            };
+
+            venta.Id = _ventaRepo.Insert(venta);
+
+            // Descontar stock dentro del lock (derivados descuentan del base)
+            foreach (var item in carrito)
+                _conversionService.DescontarStock(item.ProductoId, item.Cantidad);
+
+            return venta;
         }
-
-        var baseImponible = subtotal - descuentoGlobal;
-        var impuesto = Math.Round(baseImponible * (impuestoPct / 100), 2);
-        var total = baseImponible + impuesto;
-        var cambio = montoRecibido - total;
-
-        if (montoRecibido < total && metodoPago == "EFECTIVO")
-            throw new InvalidOperationException($"Monto insuficiente. Falta: {total - montoRecibido:F2}");
-
-        var venta = new Venta
-        {
-            Numero = _ventaRepo.GetNextNumero(),
-            ClienteId = clienteId,
-            Subtotal = subtotal,
-            Descuento = descuentoGlobal,
-            Impuesto = impuesto,
-            Total = total,
-            MetodoPago = metodoPago,
-            MontoRecibido = montoRecibido,
-            Cambio = Math.Max(0, cambio),
-            Estado = "COMPLETADA",
-            Detalles = detalles
-        };
-
-        venta.Id = _ventaRepo.Insert(venta);
-
-        // Descontar stock (derivados descuentan del base)
-        foreach (var item in carrito)
-            _conversionService.DescontarStock(item.ProductoId, item.Cantidad);
-
-        return venta;
     }
 
     public IEnumerable<Venta> GetByFecha(DateTime desde, DateTime hasta) => _ventaRepo.GetByFecha(desde, hasta);

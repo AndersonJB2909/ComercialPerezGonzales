@@ -108,6 +108,7 @@ public class ProductosViewModel : ViewModelBase
         ProductoEdit = new Producto();
         EsDerivado = false;
         ConversionEdit = null;
+        CargarProductosBase();
         ModoEdicion = true;
         OnPropertyChanged(nameof(ProductoEdit));
     }
@@ -204,6 +205,7 @@ public class ProductosViewModel : ViewModelBase
         EsDerivado = false;
         ConversionEdit = null;
         Cargar();
+        CargarProductosBase(ProductoEdit.Id);
     }
 
     private void SeleccionarImagen()
