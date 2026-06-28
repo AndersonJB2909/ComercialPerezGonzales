@@ -1,0 +1,419 @@
+<UserControl x:Class="ComercialPerezGonzales.Views.POS.DevolucionesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+             mc:Ignorable="d" 
+             d:DesignHeight="700" d:DesignWidth="1000"
+             Background="#0D1B2A">
+
+    <UserControl.Resources>
+        <Style x:Key="TextRightAlignment" TargetType="TextBlock">
+            <Setter Property="TextAlignment" Value="Right"/>
+            <Setter Property="Padding" Value="8,0"/>
+        </Style>
+
+        <Style x:Key="ModernTabItem" TargetType="TabItem">
+            <Setter Property="Background" Value="#152238"/>
+            <Setter Property="Foreground" Value="#888888"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="16,10"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border x:Name="Border" Background="{TemplateBinding Background}" BorderThickness="0,0,0,3" BorderBrush="Transparent" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter x:Name="ContentSite" ContentSource="Header" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="#1E2E4A"/>
+                                <Setter Property="Foreground" Value="#22C55E"/>
+                                <Setter TargetName="Border" Property="BorderBrush" Value="#22C55E"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/> <!-- Header -->
+            <RowDefinition Height="*"/>    <!-- Body -->
+        </Grid.RowDefinitions>
+
+        <!-- ── Header ────────────────────────────────────────────────── -->
+        <Border Grid.Row="0" Background="#152238" Padding="20,16" BorderThickness="0,0,0,1" BorderBrush="#1A2740">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                    <iconPacks:PackIconMaterial Kind="BackupRestore" Width="26" Height="26" 
+                                                Foreground="#22C55E" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                    <TextBlock Text="Devoluciones y Reembolsos" FontSize="20" FontWeight="Bold" 
+                               Foreground="White" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ── Body with TabControl ── -->
+        <TabControl Grid.Row="1" Background="Transparent" BorderThickness="0" Margin="16,0,16,16">
+            
+            <!-- ══ PESTAÑA 1: Procesar Devolución ══ -->
+            <TabItem Header="Procesar Devolución" Style="{StaticResource ModernTabItem}">
+                <Grid Margin="0,16,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="380"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- ═══ COLUMNA IZQUIERDA: Buscador y Lista de Ítems ═══ -->
+                    <Grid Grid.Column="0" Margin="0,0,12,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/> <!-- Búsqueda -->
+                            <RowDefinition Height="*"/>    <!-- Tabla de ítems -->
+                        </Grid.RowDefinitions>
+
+                        <!-- Tarjeta de Búsqueda -->
+                        <Border Grid.Row="0" Background="#152238" CornerRadius="8" Padding="16" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="Buscar Factura Original" Foreground="#22C55E" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,10"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="120"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox Grid.Column="0" Text="{Binding FacturaBusqueda, UpdateSourceTrigger=PropertyChanged}"
+                                             FontSize="16" Padding="10,8" Foreground="White" Background="#0D1B2A" 
+                                             BorderBrush="#1A3A2A" BorderThickness="1" 
+                                             GotFocus="SearchTextBox_GotFocus"/>
+                                    <Button Grid.Column="1" Command="{Binding BuscarFacturaCommand}" Margin="8,0,0,0"
+                                            Background="#22C55E" Foreground="White" BorderThickness="0" Padding="0,8" Cursor="Hand" FontSize="14" FontWeight="SemiBold">
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                            <iconPacks:PackIconMaterial Kind="Magnify" Width="16" Height="16" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                            <TextBlock Text="Buscar" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Button>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Tabla de ítems de la factura -->
+                        <Border Grid.Row="1" Background="#152238" CornerRadius="8" Padding="16" 
+                                Visibility="{Binding TieneFactura, Converter={StaticResource BoolToVisibility}}">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+
+                                <Grid Grid.Row="0" Margin="0,0,0,10">
+                                    <TextBlock Text="Detalles del Recibo" Foreground="#22C55E" FontSize="14" FontWeight="SemiBold"/>
+                                    <TextBlock HorizontalAlignment="Right" Foreground="#888" FontSize="13">
+                                        <Run Text="Cliente: "/><Run Text="{Binding VentaEncontrada.ClienteNombre, Mode=OneWay}" Foreground="White" FontWeight="Bold"/>
+                                        <Run Text="  |  Fecha: "/><Run Text="{Binding VentaEncontrada.CreatedAt, StringFormat=dd/MM/yyyy hh:mm tt, Mode=OneWay}" Foreground="White"/>
+                                    </TextBlock>
+                                </Grid>
+
+                                <DataGrid Grid.Row="1" ItemsSource="{Binding Items}"
+                                          AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="False"
+                                          Background="#0D1B2A" Foreground="White" BorderThickness="0"
+                                          GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#1A2740"
+                                          RowBackground="#0D1B2A" AlternatingRowBackground="#0F1E30"
+                                          ColumnHeaderHeight="36">
+                                    <DataGrid.ColumnHeaderStyle>
+                                        <Style TargetType="DataGridColumnHeader">
+                                            <Setter Property="Background" Value="#152238"/>
+                                            <Setter Property="Foreground" Value="#22C55E"/>
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                            <Setter Property="Padding" Value="8,0"/>
+                                        </Style>
+                                    </DataGrid.ColumnHeaderStyle>
+                                    <DataGrid.RowStyle>
+                                        <Style TargetType="DataGridRow">
+                                            <Setter Property="Foreground" Value="White"/>
+                                        </Style>
+                                    </DataGrid.RowStyle>
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Código" Width="80" Binding="{Binding Codigo}" IsReadOnly="True"/>
+                                        <DataGridTextColumn Header="Producto" Width="*" Binding="{Binding Nombre}" IsReadOnly="True"/>
+                                        <DataGridTextColumn Header="Comprado" Width="90" Binding="{Binding CantidadComprada, StringFormat={}{0:N0}}" IsReadOnly="True" ElementStyle="{StaticResource TextRightAlignment}"/>
+                                        <DataGridTextColumn Header="Devuelto" Width="80" Binding="{Binding CantidadYaDevuelta, StringFormat={}{0:N0}}" IsReadOnly="True" ElementStyle="{StaticResource TextRightAlignment}"/>
+                                        <DataGridTemplateColumn Header="A Devolver" Width="100">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <CheckBox IsChecked="{Binding Seleccionado, UpdateSourceTrigger=PropertyChanged}" 
+                                                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                        <DataGridTemplateColumn Header="Re-ingreso" Width="120">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <CheckBox IsChecked="{Binding VolverAStock, UpdateSourceTrigger=PropertyChanged}" 
+                                                              Content="A Stock" Foreground="White" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                        <DataGridTextColumn Header="Precio" Width="95" Binding="{Binding PrecioUnit, StringFormat=${0:N2}}" IsReadOnly="True" ElementStyle="{StaticResource TextRightAlignment}"/>
+                                        <DataGridTextColumn Header="Subtotal" Width="100" Binding="{Binding SubtotalCalculado, StringFormat=${0:N2}}" IsReadOnly="True" ElementStyle="{StaticResource TextRightAlignment}"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </Grid>
+                        </Border>
+
+                        <!-- Placeholder cuando no hay factura cargada -->
+                        <Border Grid.Row="1" Background="#152238" CornerRadius="8"
+                                Visibility="{Binding TieneFactura, Converter={StaticResource InverseBoolToVisibility}}">
+                            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                <iconPacks:PackIconMaterial Kind="FileSearch" Width="60" Height="60" Foreground="#1A3A2A" HorizontalAlignment="Center" Margin="0,0,0,16"/>
+                                <TextBlock Text="No hay ninguna factura seleccionada" Foreground="#888" FontSize="16" TextAlignment="Center"/>
+                                <TextBlock Text="Ingrese el código del recibo y pulse Buscar." Foreground="#555" FontSize="13" TextAlignment="Center" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- ═══ COLUMNA DERECHA: Opciones de Reembolso y Seguridad ═══ -->
+                    <Border Grid.Column="1" Background="#152238" CornerRadius="8" Padding="18">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
+                                <StackPanel>
+                                    <!-- Estado Alertas / Éxito / Error -->
+                                    <Border CornerRadius="6" Background="#2A1010" Padding="12,10" Margin="0,0,0,16"
+                                            Visibility="{Binding HayError, Converter={StaticResource BoolToVisibility}}">
+                                        <TextBlock Text="{Binding ErrorMensaje}" Foreground="#F87171" TextWrapping="Wrap" FontSize="13" FontWeight="Bold"/>
+                                    </Border>
+
+                                    <Border CornerRadius="6" Background="#102A1A" Padding="12,10" Margin="0,0,0,16"
+                                            Visibility="{Binding HayExito, Converter={StaticResource BoolToVisibility}}">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding ExitoMensaje}" Foreground="#4ADE80" TextWrapping="Wrap" FontSize="13" FontWeight="Bold"/>
+                                            <Border Margin="0,8,0,0" Background="#0D1B2A" Padding="12,10" CornerRadius="4"
+                                                    Visibility="{Binding TieneNotaCreditoGenerada, Converter={StaticResource BoolToVisibility}}">
+                                                <StackPanel>
+                                                    <TextBlock Text="VALE GENERADO:" Foreground="#888" FontSize="11" FontWeight="Bold"/>
+                                                    <TextBlock Text="{Binding NotaCreditoGenerada}" Foreground="#F59E0B" FontSize="20" FontWeight="Bold" Margin="0,4,0,0" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Código válido por 30 días en caja." Foreground="#555" FontSize="11" Margin="0,2,0,0" HorizontalAlignment="Center"/>
+                                                    <Button Command="{Binding CopiarValeCommand}"
+                                                            Background="#1E3A5F" Foreground="#93C5FD"
+                                                            BorderThickness="0" Cursor="Hand"
+                                                            Padding="10,5" Margin="0,8,0,0"
+                                                            HorizontalAlignment="Center">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <iconPacks:PackIconMaterial Kind="ContentCopy" Width="13" Height="13" VerticalAlignment="Center"/>
+                                                            <TextBlock Text=" Copiar código" FontSize="12" VerticalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Button>
+                                                </StackPanel>
+                                            </Border>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <TextBlock Text="Resumen de Devolución" Foreground="#22C55E" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,16"/>
+
+                                    <!-- Motivo de Devolución -->
+                                    <TextBlock Text="Motivo de Devolución" Foreground="#888" FontSize="13" Margin="0,0,0,6"/>
+                                    <ComboBox SelectedValue="{Binding Motivo}" SelectedValuePath="Content" Margin="0,0,0,12" Padding="8,6">
+                                        <ComboBoxItem Content="Producto defectuoso" IsSelected="True"/>
+                                        <ComboBoxItem Content="Talla/Medida incorrecta"/>
+                                        <ComboBoxItem Content="Cliente insatisfecho"/>
+                                        <ComboBoxItem Content="Otro"/>
+                                    </ComboBox>
+
+                                    <TextBox Text="{Binding MotivoOtro, UpdateSourceTrigger=PropertyChanged}"
+                                             Padding="8,6" Margin="0,0,0,16" TextWrapping="Wrap" Height="50" AcceptsReturn="True"
+                                             Visibility="{Binding EsOtroMotivo, Converter={StaticResource BoolToVisibility}}"/>
+
+                                    <!-- Método de Reembolso -->
+                                    <TextBlock Text="Método de Reembolso" Foreground="#888" FontSize="13" Margin="0,0,0,6"/>
+                                    <ComboBox SelectedValue="{Binding MetodoReembolso}" SelectedValuePath="Content" Margin="0,0,0,16" Padding="8,6">
+                                        <ComboBoxItem Content="EFECTIVO" IsSelected="True"/>
+                                        <ComboBoxItem Content="NOTA_CREDITO"/>
+                                        <ComboBoxItem Content="TRANSFERENCIA"/>
+                                    </ComboBox>
+
+                                    <Separator Background="#1A2740" Margin="0,4,0,16"/>
+
+                                    <!-- PIN Autorización Supervisor -->
+                                    <TextBlock Text="Autorización de Supervisor (PIN)" Foreground="#888" FontSize="13" Margin="0,0,0,6"/>
+                                    <PasswordBox x:Name="SupervisorPinBox" PasswordChanged="SupervisorPinBox_PasswordChanged"
+                                                 FontSize="20" Padding="8,6" Foreground="White" Background="#0D1B2A" BorderBrush="#1A3A2A" BorderThickness="1" Margin="0,0,0,24" HorizontalContentAlignment="Center"/>
+
+                                    <!-- Total devuelto info -->
+                                    <Border Background="#0D1B2A" CornerRadius="6" Padding="14,10" Margin="0,0,0,16">
+                                        <Grid>
+                                            <TextBlock Text="REEMBOLSO TOTAL:" Foreground="White" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{Binding TotalDevolucion, StringFormat=${0:N2}}" Foreground="#4ADE80" FontSize="22" FontWeight="Bold" HorizontalAlignment="Right"/>
+                                        </Grid>
+                                    </Border>
+                                </StackPanel>
+                            </ScrollViewer>
+
+                            <Grid Grid.Row="1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="8"/>
+                                    <ColumnDefinition Width="2*"/>
+                                </Grid.ColumnDefinitions>
+                                <Button Grid.Column="0" Command="{Binding LimpiarCommand}" Click="Limpiar_Click"
+                                        Background="#374151" Foreground="White" BorderThickness="0" Padding="0,12" Cursor="Hand" FontSize="14">
+                                    Limpiar
+                                </Button>
+                                <Button Grid.Column="2" Command="{Binding ProcesarDevolucionCommand}"
+                                        Foreground="White" BorderThickness="0" Padding="0,12" FontSize="16" FontWeight="Bold">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Background" Value="#DC2626"/>
+                                            <Setter Property="Cursor" Value="Hand"/>
+                                            <Style.Triggers>
+                                                <Trigger Property="IsEnabled" Value="False">
+                                                    <Setter Property="Background" Value="#374151"/>
+                                                    <Setter Property="Cursor" Value="Arrow"/>
+                                                    <Setter Property="Opacity" Value="0.6"/>
+                                                </Trigger>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#B91C1C"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <iconPacks:PackIconMaterial Kind="UndoVariant" Width="16" Height="16" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Procesar Reembolso" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <!-- ══ PESTAÑA 2: Historial de Devoluciones ══ -->
+            <TabItem Header="Historial" Style="{StaticResource ModernTabItem}">
+                <Grid Margin="0,16,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="380"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Lista de Devoluciones a la izquierda -->
+                    <Border Grid.Column="0" Background="#152238" CornerRadius="8" Padding="16" Margin="0,0,12,0">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Text="Registro de Devoluciones Realizadas" Foreground="#22C55E" FontSize="15" FontWeight="Bold" Margin="0,0,0,12"/>
+
+                            <DataGrid Grid.Row="1" ItemsSource="{Binding HistorialDevoluciones}" SelectedItem="{Binding SelectedDevolucion}"
+                                      AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
+                                      Background="#0D1B2A" Foreground="White" BorderThickness="0"
+                                      GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#1A2740"
+                                      RowBackground="#0D1B2A" AlternatingRowBackground="#0F1E30"
+                                      ColumnHeaderHeight="36">
+                                <DataGrid.ColumnHeaderStyle>
+                                    <Style TargetType="DataGridColumnHeader">
+                                        <Setter Property="Background" Value="#152238"/>
+                                        <Setter Property="Foreground" Value="#22C55E"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                        <Setter Property="Padding" Value="8,0"/>
+                                    </Style>
+                                </DataGrid.ColumnHeaderStyle>
+                                <DataGrid.RowStyle>
+                                    <Style TargetType="DataGridRow">
+                                        <Setter Property="Foreground" Value="White"/>
+                                    </Style>
+                                </DataGrid.RowStyle>
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Nº" Width="50" Binding="{Binding Id}"/>
+                                    <DataGridTextColumn Header="Fecha/Hora" Width="125" Binding="{Binding FechaHora, StringFormat=dd/MM/yyyy hh:mm tt}"/>
+                                    <DataGridTextColumn Header="Venta Ref." Width="90" Binding="{Binding VentaNumero}"/>
+                                    <DataGridTextColumn Header="Total Reembolsado" Width="130" Binding="{Binding MontoTotal, StringFormat=${0:N2}}" ElementStyle="{StaticResource TextRightAlignment}"/>
+                                    <DataGridTextColumn Header="Método" Width="100" Binding="{Binding MetodoReembolso}"/>
+                                    <DataGridTextColumn Header="Saldo Vale" Width="90" Binding="{Binding NotaCreditoDisponible, TargetNullValue='-', StringFormat=${0:N2}}" ElementStyle="{StaticResource TextRightAlignment}"/>
+                                    <DataGridTextColumn Header="Motivo" Width="*" Binding="{Binding Motivo}"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </Border>
+
+                    <!-- Detalles de la Devolución Seleccionada a la derecha -->
+                    <Border Grid.Column="1" Background="#152238" CornerRadius="8" Padding="18">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Grid.Row="0" Margin="0,0,0,12">
+                                <TextBlock Text="Detalles del Reembolso" Foreground="#22C55E" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                <Separator Background="#1A2740" Margin="0,0,0,8"/>
+                                <TextBlock Foreground="#888" FontSize="13" TextWrapping="Wrap">
+                                    <Run Text="Usuario/Cajero: "/><Run Text="{Binding SelectedDevolucion.CajeroSolicito}" Foreground="White" FontWeight="Bold"/><LineBreak/>
+                                    <Run Text="Autorizó: "/><Run Text="{Binding SelectedDevolucion.SupervisorAutorizo}" Foreground="White" FontWeight="Bold"/><LineBreak/>
+                                    <Run Text="Vale de Crédito: "/><Run Text="{Binding SelectedDevolucion.NotaCreditoCodigo, TargetNullValue='N/A'}" Foreground="#F59E0B" FontWeight="Bold"/>
+                                </TextBlock>
+                                <Button Command="{Binding CopiarValeHistorialCommand}"
+                                        Background="#1E3A5F" Foreground="#93C5FD"
+                                        BorderThickness="0" Cursor="Hand"
+                                        Padding="8,4" Margin="0,6,0,0"
+                                        HorizontalAlignment="Left">
+                                    <StackPanel Orientation="Horizontal">
+                                        <iconPacks:PackIconMaterial Kind="ContentCopy" Width="12" Height="12" VerticalAlignment="Center"/>
+                                        <TextBlock Text=" Copiar vale" FontSize="12" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+
+                            <DataGrid Grid.Row="1" ItemsSource="{Binding SelectedDevolucion.Detalles}"
+                                      AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
+                                      Background="#0D1B2A" Foreground="White" BorderThickness="0"
+                                      GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#1A2740"
+                                      RowBackground="#0D1B2A" AlternatingRowBackground="#0F1E30"
+                                      ColumnHeaderHeight="30">
+                                <DataGrid.ColumnHeaderStyle>
+                                    <Style TargetType="DataGridColumnHeader">
+                                        <Setter Property="Background" Value="#152238"/>
+                                        <Setter Property="Foreground" Value="#22C55E"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                        <Setter Property="Padding" Value="4,0"/>
+                                    </Style>
+                                </DataGrid.ColumnHeaderStyle>
+                                <DataGrid.RowStyle>
+                                    <Style TargetType="DataGridRow">
+                                        <Setter Property="Foreground" Value="White"/>
+                                    </Style>
+                                </DataGrid.RowStyle>
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Código" Width="70" Binding="{Binding ProductoCodigo}"/>
+                                    <DataGridTextColumn Header="Producto" Width="*" Binding="{Binding ProductoNombre}"/>
+                                    <DataGridTextColumn Header="Cant." Width="50" Binding="{Binding Cantidad, StringFormat={}{0:N0}}" ElementStyle="{StaticResource TextRightAlignment}"/>
+                                    <DataGridTextColumn Header="Subtotal" Width="75" Binding="{Binding Subtotal, StringFormat=${0:N2}}" ElementStyle="{StaticResource TextRightAlignment}"/>
+                                    <DataGridTextColumn Header="Estado" Width="70" Binding="{Binding EstadoProducto}"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </TabItem>
+            
+        </TabControl>
+    </Grid>
+</UserControl>

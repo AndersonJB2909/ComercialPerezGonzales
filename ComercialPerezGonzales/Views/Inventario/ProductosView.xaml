@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="ComercialPerezGonzales.Views.Inventario.ProductosView"
+<UserControl x:Class="ComercialPerezGonzales.Views.Inventario.ProductosView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks">
@@ -18,19 +18,36 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
                 <TextBlock Grid.Column="0" Text="Inventario" Foreground="White"
                            FontSize="22" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,20,0"/>
 
-                <Border Grid.Column="1" Background="#0D1B2A" CornerRadius="4" Padding="8,6" Margin="0,0,12,0">
-                    <StackPanel Orientation="Horizontal">
-                        <iconPacks:PackIconMaterial Kind="Magnify" Width="16" Height="16" Foreground="#22C55E" VerticalAlignment="Center"/>
-                        <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                                 Background="Transparent" Foreground="White" BorderThickness="0"
-                                 FontSize="16" VerticalContentAlignment="Center" Width="200" Margin="6,0,0,0"/>
-                    </StackPanel>
-                </Border>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,0,12,0">
+                    <Border Background="#0D1B2A" CornerRadius="4" Padding="8,6" Margin="0,0,12,0">
+                        <StackPanel Orientation="Horizontal">
+                            <iconPacks:PackIconMaterial Kind="Magnify" Width="16" Height="16" Foreground="#22C55E" VerticalAlignment="Center"/>
+                            <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                     Background="Transparent" Foreground="White" BorderThickness="0"
+                                     FontSize="16" VerticalContentAlignment="Center" Width="200" Margin="6,0,0,0"/>
+                        </StackPanel>
+                    </Border>
+                    <!-- Vista Toggle -->
+                    <Border Background="#0D1B2A" CornerRadius="4" Padding="4">
+                        <StackPanel Orientation="Horizontal">
+                            <Button Command="{Binding ModoListaCommand}" ToolTip="Vista de Lista"
+                                    Background="Transparent" BorderThickness="0" Padding="8,4" Cursor="Hand">
+                                <iconPacks:PackIconMaterial Kind="FormatListBulleted" Width="16" Height="16" Foreground="White"/>
+                            </Button>
+                            <Button Command="{Binding ModoTarjetaCommand}" ToolTip="Vista de Tarjetas"
+                                    Background="Transparent" BorderThickness="0" Padding="8,4" Cursor="Hand">
+                                <iconPacks:PackIconMaterial Kind="ViewGrid" Width="16" Height="16" Foreground="White"/>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
 
                 <Button Grid.Column="2" Command="{Binding NuevoCommand}"
                         Background="#16A34A" Foreground="White" BorderThickness="0"
@@ -52,72 +69,388 @@
 
                 <Button Grid.Column="4" Command="{Binding EliminarCommand}"
                         Background="#DC2626" Foreground="White" BorderThickness="0"
-                        Padding="12,8" Cursor="Hand" FontSize="15">
+                        Padding="12,8" Margin="0,0,8,0" Cursor="Hand" FontSize="15">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="Delete" Width="14" Height="14" VerticalAlignment="Center"/>
                         <TextBlock Text=" Eliminar" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
+
+                <Button Grid.Column="5" Command="{Binding DescargarImagenesCommand}"
+                        Background="#0EA5E9" Foreground="White" BorderThickness="0"
+                        Padding="12,8" Margin="0,0,8,0" Cursor="Hand" FontSize="15"
+                        ToolTip="Buscar y descargar imágenes desde la web para productos sin imagen">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial Kind="CloudDownload" Width="14" Height="14" VerticalAlignment="Center"/>
+                        <TextBlock Text=" Descargar imágenes web" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
             </Grid>
+        </Border>
+
+        <!-- Banner de estado de descarga (visible solo durante la operación) -->
+        <Border Grid.Row="0" VerticalAlignment="Bottom" Background="#0EA5E9" Padding="16,6"
+                Visibility="{Binding DescargandoImagenes, Converter={StaticResource BoolToVisibility}}">
+            <StackPanel Orientation="Horizontal">
+                <iconPacks:PackIconMaterial Kind="CloudDownload" Width="14" Height="14" Foreground="White" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding EstadoDescarga}" Foreground="White" FontSize="13" Margin="8,0,0,0" VerticalAlignment="Center"/>
+            </StackPanel>
         </Border>
 
         <!-- Contenido: lista o formulario -->
         <Grid Grid.Row="1">
-            <!-- DataGrid de productos -->
-            <DataGrid ItemsSource="{Binding Productos}"
-                      SelectedItem="{Binding Selected}"
-                      AutoGenerateColumns="False"
-                      CanUserAddRows="False" CanUserDeleteRows="False"
-                      IsReadOnly="True" SelectionMode="Single"
-                      Background="#0D1B2A" Foreground="White"
-                      BorderThickness="0" GridLinesVisibility="Horizontal"
-                      HorizontalGridLinesBrush="#1A2740" AlternatingRowBackground="#0F1E30"
-                      RowBackground="#0D1B2A" ColumnHeaderHeight="40"
-                      Visibility="{Binding ModoEdicion, Converter={StaticResource InverseBoolToVisibility}}">
-                <DataGrid.ColumnHeaderStyle>
-                    <Style TargetType="DataGridColumnHeader">
-                        <Setter Property="Background" Value="#152238"/>
-                        <Setter Property="Foreground" Value="#22C55E"/>
-                        <Setter Property="FontWeight" Value="SemiBold"/>
-                        <Setter Property="Padding" Value="12,0"/>
-                    </Style>
-                </DataGrid.ColumnHeaderStyle>
-                <DataGrid.RowStyle>
-                    <Style TargetType="DataGridRow">
-                        <Setter Property="Foreground" Value="White"/>
-                        <Style.Triggers>
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter Property="Background" Value="#14532D"/>
-                            </Trigger>
-                        </Style.Triggers>
-                    </Style>
-                </DataGrid.RowStyle>
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" Width="120"/>
-                    <DataGridTextColumn Header="Nombre" Binding="{Binding Nombre}" Width="*"/>
-                    <DataGridTextColumn Header="Categoría" Binding="{Binding CategoriaNombre}" Width="130"/>
-                    <DataGridTextColumn Header="Precio Venta" Binding="{Binding PrecioVenta, StringFormat=${0:N2}}" Width="110"/>
-                    <DataGridTextColumn Header="Stock" Binding="{Binding StockEfectivo, StringFormat={}{0:N2}}" Width="80"/>
-                    <DataGridTextColumn Header="Unidad" Binding="{Binding UnidadMedida}" Width="80"/>
-                    <DataGridTemplateColumn Header="Conversión" Width="160">
-                        <DataGridTemplateColumn.CellTemplate>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="220" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <!-- Barra Lateral de Categorías y Unidades -->
+            <Border Grid.Column="0" Background="#111D2D" BorderThickness="0,0,1,0" BorderBrush="#1A2740"
+                    Visibility="{Binding ModoEdicion, Converter={StaticResource InverseBoolToVisibility}}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="0,0,0,16">
+                        <!-- Sección Categorías -->
+                        <StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Filtrar por Categoría" Foreground="White" FontSize="16" FontWeight="SemiBold"
+                                           Margin="16,16,8,8" VerticalAlignment="Center"/>
+                                <Button Grid.Column="1" Command="{Binding ActivarNuevaCategoriaFiltroCommand}"
+                                        Content="+" Foreground="White" Background="#22C55E" BorderThickness="0"
+                                        Padding="12,0" FontSize="18" Margin="0,16,16,8" Cursor="Hand" ToolTip="Nueva Categoría"
+                                        Visibility="{Binding ModoNuevaCategoriaFiltro, Converter={StaticResource InverseBoolToVisibility}}"/>
+                            </Grid>
+
+                            <Grid Visibility="{Binding ModoNuevaCategoriaFiltro, Converter={StaticResource BoolToVisibility}}" Margin="16,0,16,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Text="{Binding NuevaCategoriaFiltroNombre, UpdateSourceTrigger=PropertyChanged}" 
+                                         Background="#0D1B2A" Foreground="White" BorderBrush="#22C55E" Padding="8,4"/>
+                                <Button Grid.Column="1" Command="{Binding GuardarNuevaCategoriaFiltroCommand}" 
+                                        Content="✔" Foreground="White" Background="#16A34A" BorderThickness="0" Margin="4,0,0,0" Padding="8,0" 
+                                        Cursor="Hand" ToolTip="Guardar"/>
+                                <Button Grid.Column="2" Command="{Binding CancelarNuevaCategoriaFiltroCommand}" 
+                                        Content="✖" Foreground="White" Background="#EF4444" BorderThickness="0" Margin="4,0,0,0" Padding="8,0" 
+                                        Cursor="Hand" ToolTip="Cancelar"/>
+                            </Grid>
+                            
+                            <StackPanel Orientation="Horizontal" Margin="16,0,16,8">
+                                <Button Command="{Binding MarcarTodasCategoriasCommand}" Content="Marcar todos" 
+                                        Background="Transparent" BorderThickness="0" Foreground="#22C55E" Cursor="Hand" FontSize="12"/>
+                                <TextBlock Text="|" Foreground="#555" VerticalAlignment="Center" FontSize="12" Margin="6,0"/>
+                                <Button Command="{Binding DesmarcarTodasCategoriasCommand}" Content="Desmarcar todos" 
+                                        Background="Transparent" BorderThickness="0" Foreground="#EF4444" Cursor="Hand" FontSize="12"/>
+                            </StackPanel>
+                            
+                            <ItemsControl ItemsSource="{Binding CategoriasFiltro}" Margin="16,0,16,16">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <CheckBox Content="{Binding Categoria.Nombre}"
+                                                  IsChecked="{Binding IsSelected}"
+                                                  Foreground="#DDD" FontSize="14" Margin="0,4"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+
+                        <!-- Separador -->
+                        <Border BorderBrush="#1A2740" BorderThickness="0,1,0,0" Margin="16,8"/>
+
+                        <!-- Sección Unidades -->
+                        <StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Filtrar por Unidades" Foreground="White" FontSize="16" FontWeight="SemiBold"
+                                           Margin="16,8,8,8" VerticalAlignment="Center"/>
+                                <Button Grid.Column="1" Command="{Binding ActivarNuevaUnidadFiltroCommand}"
+                                        Content="+" Foreground="White" Background="#22C55E" BorderThickness="0"
+                                        Padding="12,0" FontSize="18" Margin="0,8,16,8" Cursor="Hand" ToolTip="Nueva Unidad"
+                                        Visibility="{Binding ModoNuevaUnidadFiltro, Converter={StaticResource InverseBoolToVisibility}}"/>
+                            </Grid>
+
+                            <Grid Visibility="{Binding ModoNuevaUnidadFiltro, Converter={StaticResource BoolToVisibility}}" Margin="16,0,16,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Text="{Binding NuevaUnidadFiltroNombre, UpdateSourceTrigger=PropertyChanged}" 
+                                         Background="#0D1B2A" Foreground="White" BorderBrush="#22C55E" Padding="8,4"/>
+                                <Button Grid.Column="1" Command="{Binding GuardarNuevaUnidadFiltroCommand}" 
+                                        Content="✔" Foreground="White" Background="#16A34A" BorderThickness="0" Margin="4,0,0,0" Padding="8,0" 
+                                        Cursor="Hand" ToolTip="Guardar"/>
+                                <Button Grid.Column="2" Command="{Binding CancelarNuevaUnidadFiltroCommand}" 
+                                        Content="✖" Foreground="White" Background="#EF4444" BorderThickness="0" Margin="4,0,0,0" Padding="8,0" 
+                                        Cursor="Hand" ToolTip="Cancelar"/>
+                            </Grid>
+                            
+                            <StackPanel Orientation="Horizontal" Margin="16,0,16,8">
+                                <Button Command="{Binding MarcarTodasUnidadesCommand}" Content="Marcar todos" 
+                                        Background="Transparent" BorderThickness="0" Foreground="#22C55E" Cursor="Hand" FontSize="12"/>
+                                <TextBlock Text="|" Foreground="#555" VerticalAlignment="Center" FontSize="12" Margin="6,0"/>
+                                <Button Command="{Binding DesmarcarTodasUnidadesCommand}" Content="Desmarcar todos" 
+                                        Background="Transparent" BorderThickness="0" Foreground="#EF4444" Cursor="Hand" FontSize="12"/>
+                            </StackPanel>
+                            
+                            <ItemsControl ItemsSource="{Binding UnidadesFiltro}" Margin="16,0,16,16">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <CheckBox Content="{Binding Unidad.Nombre}"
+                                                  IsChecked="{Binding IsSelected}"
+                                                  Foreground="#DDD" FontSize="14" Margin="0,4"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+
+            <!-- Área Central -->
+            <Grid Grid.Column="1">
+                <Grid Visibility="{Binding ModoEdicion, Converter={StaticResource InverseBoolToVisibility}}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- DataGrid de productos -->
+                    <DataGrid Grid.Row="0" ItemsSource="{Binding Productos}"
+                               SelectedItem="{Binding Selected}"
+                               AutoGenerateColumns="False"
+                               CanUserAddRows="False" CanUserDeleteRows="False"
+                               IsReadOnly="True" SelectionMode="Single"
+                               Background="#0D1B2A" Foreground="White"
+                               BorderThickness="0" GridLinesVisibility="Horizontal"
+                               HorizontalGridLinesBrush="#1A2740" AlternatingRowBackground="#0F1E30"
+                               RowBackground="#0D1B2A" ColumnHeaderHeight="40" RowHeight="50">
+                        <DataGrid.Style>
+                            <Style TargetType="DataGrid">
+                                <Setter Property="Visibility" Value="Visible"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsCardView}" Value="True">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.Style>
+                        <DataGrid.ColumnHeaderStyle>
+                            <Style TargetType="DataGridColumnHeader">
+                                <Setter Property="Background" Value="#152238"/>
+                                <Setter Property="Foreground" Value="#22C55E"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                <Setter Property="Padding" Value="12,0"/>
+                            </Style>
+                        </DataGrid.ColumnHeaderStyle>
+                        <DataGrid.CellStyle>
+                            <Style TargetType="DataGridCell">
+                                <Setter Property="BorderThickness" Value="0"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="DataGridCell">
+                                            <Border Background="{TemplateBinding Background}">
+                                                <ContentPresenter VerticalAlignment="Center" Margin="12,0"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </DataGrid.CellStyle>
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow">
+                                <Setter Property="Foreground" Value="White"/>
+                                <Style.Triggers>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter Property="Background" Value="#14532D"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.RowStyle>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" Width="100"/>
+                            <DataGridTextColumn Header="Nombre" Binding="{Binding Nombre}" Width="180"/>
+                            <DataGridTextColumn Header="Descripción" Binding="{Binding Descripcion}" Width="150"/>
+                            <DataGridTextColumn Header="Categoría" Binding="{Binding CategoriaNombre}" Width="110"/>
+                            <DataGridTextColumn Header="P. Costo" Binding="{Binding PrecioCosto, StringFormat=${0:N2}}" Width="90"/>
+                            <DataGridTextColumn Header="P. Venta" Binding="{Binding PrecioVenta, StringFormat=${0:N2}}" Width="90"/>
+                            <DataGridTextColumn Header="Stock" Binding="{Binding StockEfectivo, StringFormat={}{0:N2}}" Width="80"/>
+                            <DataGridTextColumn Header="Stock Mín." Binding="{Binding StockMinimo, StringFormat={}{0:N2}}" Width="90"/>
+                            <DataGridTextColumn Header="Unidad" Binding="{Binding UnidadMedida}" Width="80"/>
+                            <DataGridTextColumn Header="Vence" Binding="{Binding FechaCaducidad, StringFormat=dd/MM/yyyy}" Width="95"/>
+                            <DataGridTemplateColumn Header="Conversión" Width="*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Foreground="#22C55E" FontSize="13" VerticalAlignment="Center" Margin="0">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding EsDerivado}" Value="True">
+                                                            <Setter Property="Text" Value="{Binding Conversion.ProductoBaseNombre, StringFormat='Base: {0}'}"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Cards de productos -->
+                    <ListBox Grid.Row="0" ItemsSource="{Binding Productos}" SelectedItem="{Binding Selected}"
+                              Background="Transparent" BorderThickness="0"
+                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                              ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                              HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                              HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"
+                              Padding="8">
+                        <ListBox.Style>
+                            <Style TargetType="ListBox">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsCardView}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ListBox.Style>
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+                                <Setter Property="Padding" Value="0"/>
+                                <Setter Property="Margin" Value="0"/>
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Setter Property="BorderThickness" Value="0"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListBoxItem">
+                                            <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Rows="5" Columns="8" />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                        <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <TextBlock Foreground="#22C55E" FontSize="13" VerticalAlignment="Center" Margin="12,0">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
+                                <Border Background="#152238" CornerRadius="8" Margin="4"
+                                        BorderBrush="#1A2740" BorderThickness="1"
+                                        HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding EsDerivado}" Value="True">
-                                                    <Setter Property="Text" Value="{Binding Conversion.ProductoBaseNombre, StringFormat='Base: {0}'}"/>
+                                                <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
+                                                    <Setter Property="BorderBrush" Value="#22C55E"/>
+                                                    <Setter Property="BorderThickness" Value="2"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
+                                    </Border.Style>
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="*"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        
+                                        <Border Grid.Row="0" CornerRadius="6,6,0,0" Background="#0D1B2A" ClipToBounds="True">
+                                            <Grid>
+                                                <Image Source="{Binding ImagenData, Converter={StaticResource BytesToImage}}"
+                                                       Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality">
+                                                    <Image.Style>
+                                                        <Style TargetType="Image">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding ImagenData}" Value="{x:Null}">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Image.Style>
+                                                </Image>
+                                                <iconPacks:PackIconMaterial Kind="ImageOff" Width="32" Height="32" Foreground="#555"
+                                                                             HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                    <iconPacks:PackIconMaterial.Style>
+                                                        <Style TargetType="iconPacks:PackIconMaterial">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding ImagenData}" Value="{x:Null}">
+                                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </iconPacks:PackIconMaterial.Style>
+                                                </iconPacks:PackIconMaterial>
+                                            </Grid>
+                                        </Border>
+                                        
+                                        <StackPanel Grid.Row="1" Margin="8,6">
+                                            <TextBlock Text="{Binding Codigo}" Foreground="#22C55E" FontSize="10" FontWeight="SemiBold"/>
+                                            <TextBlock Text="{Binding Nombre}" Foreground="White" FontSize="12" FontWeight="SemiBold"
+                                                       TextWrapping="Wrap" MaxHeight="32" TextTrimming="CharacterEllipsis" Margin="0,1,0,2"/>
+                                            <TextBlock Text="{Binding CategoriaNombre}" Foreground="#888" FontSize="11" Margin="0,0,0,2"/>
+                                            
+                                            <Grid Margin="0,2,0,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" Text="{Binding PrecioVenta, StringFormat=${0:N2}}" 
+                                                           Foreground="#10B981" FontSize="13" FontWeight="Bold"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding StockEfectivo, StringFormat={}{0:N2} disp.}" 
+                                                           Foreground="#888" FontSize="10" VerticalAlignment="Bottom"/>
+                                            </Grid>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
                             </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                </DataGrid.Columns>
-            </DataGrid>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <!-- Barra de Paginación -->
+                    <Border Grid.Row="1" Background="#152238" Padding="16,10" BorderThickness="0,1,0,0" BorderBrush="#1A2740">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <TextBlock Grid.Column="0" Text="{Binding TotalProductosText}" Foreground="#888" VerticalAlignment="Center" FontSize="14"/>
+                            
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Button Command="{Binding PaginaAnteriorCommand}"
+                                        Background="#0D1B2A" Foreground="White" BorderThickness="1" BorderBrush="#1A2740"
+                                        Padding="14,6" Cursor="Hand" ToolTip="Página Anterior">
+                                    <iconPacks:PackIconMaterial Kind="ChevronLeft" Width="14" Height="14"/>
+                                </Button>
+                                
+                                <TextBlock Text="{Binding PaginaDetalleText}" Foreground="White" FontSize="14" FontWeight="SemiBold"
+                                           VerticalAlignment="Center" Margin="20,0"/>
+                                
+                                <Button Command="{Binding PaginaSiguienteCommand}"
+                                        Background="#0D1B2A" Foreground="White" BorderThickness="1" BorderBrush="#1A2740"
+                                        Padding="14,6" Cursor="Hand" ToolTip="Página Siguiente">
+                                    <iconPacks:PackIconMaterial Kind="ChevronRight" Width="14" Height="14"/>
+                                </Button>
+                            </StackPanel>
+                            
+                            <TextBlock Grid.Column="2" Text="{Binding PaginaActualText}" Foreground="#888" VerticalAlignment="Center" FontSize="14"/>
+                        </Grid>
+                    </Border>
+                </Grid>
 
             <!-- Formulario de edición -->
             <ScrollViewer Visibility="{Binding ModoEdicion, Converter={StaticResource BoolToVisibility}}"
@@ -127,6 +460,48 @@
                         <TextBlock Text="Datos del Producto" Foreground="#22C55E"
                                    FontSize="20" FontWeight="Bold" Margin="0,0,0,20"/>
 
+                        <!-- Conversión de unidades -->
+                        <Border Background="#0D1B2A" CornerRadius="6" Padding="16" Margin="0,0,0,20">
+                            <StackPanel>
+                                <TextBlock Text="Conversión de unidades" Foreground="#22C55E"
+                                           FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
+
+                                <CheckBox Content="Es una presentación (paquete/caja) de otro producto"
+                                          IsChecked="{Binding DataContext.EsDerivado, RelativeSource={RelativeSource AncestorType=ScrollViewer}}"
+                                          Foreground="White" FontSize="15" Margin="0,0,0,12"/>
+
+                                <StackPanel Visibility="{Binding DataContext.EsDerivado,
+                                                RelativeSource={RelativeSource AncestorType=ScrollViewer},
+                                                Converter={StaticResource BoolToVisibility}}">
+
+                                    <Grid Margin="0,0,0,4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="16"/>
+                                            <ColumnDefinition Width="120"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="Producto base" Foreground="#888" FontSize="14" Margin="0,0,0,4"/>
+                                            <ComboBox ItemsSource="{Binding DataContext.ProductosBase, RelativeSource={RelativeSource AncestorType=ScrollViewer}}"
+                                                      SelectedValuePath="Id"
+                                                      SelectedValue="{Binding DataContext.SelectedProductoBaseId, RelativeSource={RelativeSource AncestorType=ScrollViewer}}"
+                                                      DisplayMemberPath="Nombre"
+                                                      FontSize="15"
+                                                      Background="#152238" Foreground="White"/>
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="Factor (uds. base)" Foreground="#888" FontSize="14" Margin="0,0,0,4"/>
+                                            <TextBox Text="{Binding DataContext.ConversionEdit.Factor, RelativeSource={RelativeSource AncestorType=ScrollViewer}}"
+                                                     Background="#0D1B2A" Foreground="White"
+                                                     BorderBrush="#166534" Padding="8,6" FontSize="16"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -134,6 +509,10 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="16"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="16"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="16"/>
                                 <RowDefinition Height="Auto"/>
@@ -173,6 +552,16 @@
 
                             <!-- Stock -->
                             <StackPanel Grid.Row="4" Grid.Column="0">
+                                <StackPanel.Style>
+                                    <Style TargetType="StackPanel">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding DataContext.EsDerivado, RelativeSource={RelativeSource AncestorType=ScrollViewer}}" Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </StackPanel.Style>
                                 <TextBlock Text="Stock" Foreground="#888" FontSize="14" Margin="0,0,0,4"/>
                                 <TextBox Text="{Binding Stock}" Background="#0D1B2A" Foreground="White"
                                          BorderBrush="#166534" Padding="8,6" FontSize="16"/>
@@ -180,6 +569,16 @@
 
                             <!-- Stock Mínimo -->
                             <StackPanel Grid.Row="4" Grid.Column="2">
+                                <StackPanel.Style>
+                                    <Style TargetType="StackPanel">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding DataContext.EsDerivado, RelativeSource={RelativeSource AncestorType=ScrollViewer}}" Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </StackPanel.Style>
                                 <TextBlock Text="Stock Mínimo" Foreground="#888" FontSize="14" Margin="0,0,0,4"/>
                                 <TextBox Text="{Binding StockMinimo}" Background="#0D1B2A" Foreground="White"
                                          BorderBrush="#166534" Padding="8,6" FontSize="16"/>
@@ -188,16 +587,42 @@
                             <!-- Unidad de medida -->
                             <StackPanel Grid.Row="6" Grid.Column="0">
                                 <TextBlock Text="Unidad de Medida" Foreground="#888" FontSize="14" Margin="0,0,0,4"/>
-                                <ComboBox SelectedValue="{Binding UnidadMedida}"
-                                          SelectedValuePath="Content"
-                                          FontSize="16">
-                                    <ComboBoxItem Content="UND"/>
-                                    <ComboBoxItem Content="KG"/>
-                                    <ComboBoxItem Content="LT"/>
-                                    <ComboBoxItem Content="MT"/>
-                                    <ComboBoxItem Content="CAJA"/>
-                                    <ComboBoxItem Content="PAR"/>
-                                </ComboBox>
+                                <Grid>
+                                    <Grid Visibility="{Binding DataContext.ModoNuevaUnidad, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource InverseBoolToVisibility}}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <ComboBox SelectedValue="{Binding UnidadMedida}"
+                                                  SelectedValuePath="Nombre"
+                                                  ItemsSource="{Binding DataContext.UnidadesMedida, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                  FontSize="16">
+                                            <ComboBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding Nombre}" />
+                                                </DataTemplate>
+                                            </ComboBox.ItemTemplate>
+                                        </ComboBox>
+                                        <Button Grid.Column="1" Command="{Binding DataContext.ActivarNuevaUnidadCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                                Content="+" Foreground="White" Background="#22C55E" BorderThickness="0" Margin="8,0,0,0" Padding="12,0" 
+                                                FontSize="18" Cursor="Hand" ToolTip="Nueva Unidad"/>
+                                    </Grid>
+                                    <Grid Visibility="{Binding DataContext.ModoNuevaUnidad, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisibility}}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBox Text="{Binding DataContext.NuevaUnidadNombre, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}" 
+                                                 Background="#0D1B2A" Foreground="White" BorderBrush="#22C55E" Padding="8,6" FontSize="16"/>
+                                        <Button Grid.Column="1" Command="{Binding DataContext.GuardarNuevaUnidadCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                                Content="✔" Foreground="White" Background="#16A34A" BorderThickness="0" Margin="8,0,0,0" Padding="12,0" 
+                                                FontSize="16" Cursor="Hand" ToolTip="Guardar"/>
+                                        <Button Grid.Column="2" Command="{Binding DataContext.CancelarNuevaUnidadCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                                Content="✖" Foreground="White" Background="#EF4444" BorderThickness="0" Margin="4,0,0,0" Padding="12,0" 
+                                                FontSize="14" Cursor="Hand" ToolTip="Cancelar"/>
+                                    </Grid>
+                                </Grid>
                             </StackPanel>
 
                             <!-- Descripción -->
@@ -206,68 +631,72 @@
                                 <TextBox Text="{Binding Descripcion}" Background="#0D1B2A" Foreground="White"
                                          BorderBrush="#166534" Padding="8,6" FontSize="16"/>
                             </StackPanel>
-                        </Grid>
 
-                        <!-- Conversión de unidades -->
-                        <Border Background="#0D1B2A" CornerRadius="6" Padding="16" Margin="0,20,0,0">
-                            <StackPanel>
-                                <TextBlock Text="Conversión de unidades" Foreground="#22C55E"
-                                           FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
-
-                                <CheckBox Content="Es una presentación (paquete/caja) de otro producto"
-                                          IsChecked="{Binding DataContext.EsDerivado, RelativeSource={RelativeSource AncestorType=ScrollViewer}}"
-                                          Foreground="White" FontSize="15" Margin="0,0,0,12"/>
-
-                                <StackPanel Visibility="{Binding DataContext.EsDerivado,
-                                                RelativeSource={RelativeSource AncestorType=ScrollViewer},
-                                                Converter={StaticResource BoolToVisibility}}">
-
-                                    <Grid Margin="0,0,0,12">
+                            <!-- Categoría -->
+                            <StackPanel Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="3">
+                                <StackPanel.Style>
+                                    <Style TargetType="StackPanel">
+                                        <Setter Property="IsEnabled" Value="True"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding DataContext.EsDerivado, RelativeSource={RelativeSource AncestorType=ScrollViewer}}" Value="True">
+                                                <Setter Property="IsEnabled" Value="False"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </StackPanel.Style>
+                                <TextBlock Text="Categoría" Foreground="#888" FontSize="14" Margin="0,0,0,4"/>
+                                <Grid>
+                                    <Grid Visibility="{Binding DataContext.ModoNuevaCategoria, RelativeSource={RelativeSource AncestorType=ScrollViewer}, Converter={StaticResource InverseBoolToVisibility}}">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="16"/>
-                                            <ColumnDefinition Width="120"/>
+                                            <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
-
-                                        <StackPanel Grid.Column="0">
-                                            <TextBlock Text="Producto base" Foreground="#888" FontSize="14" Margin="0,0,0,4"/>
-                                            <ComboBox ItemsSource="{Binding DataContext.ProductosBase, RelativeSource={RelativeSource AncestorType=ScrollViewer}}"
-                                                      SelectedValuePath="Id"
-                                                      SelectedValue="{Binding DataContext.ConversionEdit.ProductoBaseId, RelativeSource={RelativeSource AncestorType=ScrollViewer}}"
-                                                      DisplayMemberPath="Nombre"
-                                                      FontSize="15"
-                                                      Background="#152238" Foreground="White"/>
-                                        </StackPanel>
-
-                                        <StackPanel Grid.Column="2">
-                                            <TextBlock Text="Factor (uds. base)" Foreground="#888" FontSize="14" Margin="0,0,0,4"/>
-                                            <TextBox Text="{Binding DataContext.ConversionEdit.Factor, RelativeSource={RelativeSource AncestorType=ScrollViewer}}"
-                                                     Background="#0D1B2A" Foreground="White"
-                                                     BorderBrush="#166534" Padding="8,6" FontSize="16"/>
-                                        </StackPanel>
+                                        <ComboBox ItemsSource="{Binding DataContext.Categorias, RelativeSource={RelativeSource AncestorType=ScrollViewer}}"
+                                                  SelectedValuePath="Id"
+                                                  SelectedValue="{Binding CategoriaId}"
+                                                  DisplayMemberPath="Nombre"
+                                                  FontSize="16"
+                                                  Background="#152238" Foreground="White"/>
+                                        <Button Grid.Column="1" Command="{Binding DataContext.ActivarNuevaCategoriaCommand, RelativeSource={RelativeSource AncestorType=ScrollViewer}}" 
+                                                Content="+" Foreground="White" Background="#22C55E" BorderThickness="0" Margin="8,0,0,0" Padding="12,0" 
+                                                FontSize="18" Cursor="Hand" ToolTip="Nueva Categoría"/>
                                     </Grid>
-
-                                    <StackPanel Orientation="Horizontal">
-                                        <Button Command="{Binding DataContext.GuardarConversionCommand, RelativeSource={RelativeSource AncestorType=ScrollViewer}}"
-                                                Background="#166534" Foreground="White" BorderThickness="0"
-                                                Padding="12,8" Cursor="Hand" FontSize="14" Margin="0,0,8,0">
-                                            <StackPanel Orientation="Horizontal">
-                                                <iconPacks:PackIconMaterial Kind="LinkVariant" Width="14" Height="14" VerticalAlignment="Center"/>
-                                                <TextBlock Text=" Guardar conversión" VerticalAlignment="Center"/>
-                                            </StackPanel>
-                                        </Button>
-                                        <Button Command="{Binding DataContext.EliminarConversionCommand, RelativeSource={RelativeSource AncestorType=ScrollViewer}}"
-                                                Background="#7F1D1D" Foreground="White" BorderThickness="0"
-                                                Padding="12,8" Cursor="Hand" FontSize="14">
-                                            <StackPanel Orientation="Horizontal">
-                                                <iconPacks:PackIconMaterial Kind="LinkVariantOff" Width="14" Height="14" VerticalAlignment="Center"/>
-                                                <TextBlock Text=" Quitar conversión" VerticalAlignment="Center"/>
-                                            </StackPanel>
-                                        </Button>
-                                    </StackPanel>
-                                </StackPanel>
+                                    <Grid Visibility="{Binding DataContext.ModoNuevaCategoria, RelativeSource={RelativeSource AncestorType=ScrollViewer}, Converter={StaticResource BoolToVisibility}}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBox Text="{Binding DataContext.NuevaCategoriaNombre, RelativeSource={RelativeSource AncestorType=ScrollViewer}, UpdateSourceTrigger=PropertyChanged}" 
+                                                 Background="#0D1B2A" Foreground="White" BorderBrush="#22C55E" Padding="8,6" FontSize="16"/>
+                                        <Button Grid.Column="1" Command="{Binding DataContext.GuardarNuevaCategoriaCommand, RelativeSource={RelativeSource AncestorType=ScrollViewer}}" 
+                                                Content="✔" Foreground="White" Background="#16A34A" BorderThickness="0" Margin="8,0,0,0" Padding="12,0" 
+                                                FontSize="16" Cursor="Hand" ToolTip="Guardar"/>
+                                        <Button Grid.Column="2" Command="{Binding DataContext.CancelarNuevaCategoriaCommand, RelativeSource={RelativeSource AncestorType=ScrollViewer}}" 
+                                                Content="✖" Foreground="White" Background="#EF4444" BorderThickness="0" Margin="4,0,0,0" Padding="12,0" 
+                                                FontSize="14" Cursor="Hand" ToolTip="Cancelar"/>
+                                    </Grid>
+                                </Grid>
                             </StackPanel>
-                        </Border>
+
+                            <!-- Fecha de Caducidad -->
+                            <StackPanel Grid.Row="10" Grid.Column="0">
+                                <StackPanel.Style>
+                                    <Style TargetType="StackPanel">
+                                        <Setter Property="IsEnabled" Value="True"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding DataContext.EsDerivado, RelativeSource={RelativeSource AncestorType=ScrollViewer}}" Value="True">
+                                                <Setter Property="IsEnabled" Value="False"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </StackPanel.Style>
+                                <TextBlock Text="Fecha de Caducidad" Foreground="#888" FontSize="14" Margin="0,0,0,4"/>
+                                <DatePicker SelectedDate="{Binding FechaCaducidad}"
+                                            Background="#0D1B2A" Foreground="White"
+                                            BorderBrush="#166534" Padding="6" FontSize="16"/>
+                            </StackPanel>
+                        </Grid>
 
                         <!-- Imagen del producto -->
                         <Border Background="#0D1B2A" CornerRadius="6" Padding="12" Margin="0,20,0,0">
@@ -347,6 +776,7 @@
                     </StackPanel>
                 </Border>
             </ScrollViewer>
+            </Grid>
         </Grid>
     </Grid>
 </UserControl>

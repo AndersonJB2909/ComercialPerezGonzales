@@ -29,6 +29,15 @@ public class DatabaseInitializer
         }
         catch { /* columna ya existe */ }
 
+        // Migración: agregar columna fecha_caducidad si no existe
+        try
+        {
+            using var m = conn.CreateCommand();
+            m.CommandText = "ALTER TABLE productos ADD COLUMN fecha_caducidad TEXT";
+            m.ExecuteNonQuery();
+        }
+        catch { /* columna ya existe */ }
+
         // Migración: tabla de conversiones de productos
         try
         {
@@ -47,6 +56,164 @@ public class DatabaseInitializer
             m2.ExecuteNonQuery();
         }
         catch { /* tabla ya existe */ }
+
+        // Migración: Limpieza de duplicados de Cliente General
+        try
+        {
+            using var m3 = conn.CreateCommand();
+            m3.CommandText = @"
+            -- Reasignar ventas al primer Cliente General si estaban usando uno de los duplicados
+            UPDATE ventas 
+            SET cliente_id = (SELECT MIN(id) FROM clientes WHERE nombre = 'Cliente' AND apellido = 'General')
+            WHERE cliente_id IN (
+                SELECT id FROM clientes WHERE nombre = 'Cliente' AND apellido = 'General'
+            );
+            
+            -- Eliminar los duplicados
+            DELETE FROM clientes 
+            WHERE nombre = 'Cliente' AND apellido = 'General' 
+              AND id > (SELECT MIN(id) FROM clientes WHERE nombre = 'Cliente' AND apellido = 'General');
+              
+            -- Insertar si no existe
+            INSERT INTO clientes (nombre, apellido) 
+            SELECT 'Cliente', 'General'
+            WHERE NOT EXISTS (SELECT 1 FROM clientes WHERE nombre = 'Cliente' AND apellido = 'General');
+            ";
+            m3.ExecuteNonQuery();
+        }
+        catch { /* error ignorado */ }
+
+        // Migración: Actualizar check constraint de devoluciones para permitir TRANSFERENCIA
+        try
+        {
+            string schemaSql = "";
+            using (var checkCmd = conn.CreateCommand())
+            {
+                checkCmd.CommandText = "SELECT sql FROM sqlite_schema WHERE name = 'devoluciones'";
+                schemaSql = checkCmd.ExecuteScalar()?.ToString() ?? "";
+            }
+
+            if (!schemaSql.Contains("TRANSFERENCIA"))
+            {
+                using var mDev = conn.CreateCommand();
+                mDev.CommandText = @"
+                    PRAGMA foreign_keys = OFF;
+                    
+                    CREATE TABLE devoluciones_new (
+                        id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+                        venta_id            INTEGER NOT NULL REFERENCES ventas(id),
+                        cierre_caja_id      INTEGER NOT NULL REFERENCES cierres_caja(id),
+                        fecha_hora          TEXT    NOT NULL DEFAULT (datetime('now','localtime')),
+                        motivo              TEXT    NOT NULL,
+                        monto_subtotal      REAL    NOT NULL,
+                        monto_descuento     REAL    NOT NULL DEFAULT 0,
+                        monto_impuesto      REAL    NOT NULL DEFAULT 0,
+                        monto_total         REAL    NOT NULL,
+                        metodo_reembolso    TEXT    NOT NULL CHECK(metodo_reembolso IN ('EFECTIVO', 'NOTA_CREDITO', 'TARJETA', 'TRANSFERENCIA')),
+                        supervisor_autorizo TEXT    NOT NULL,
+                        cajero_solicito     TEXT    NOT NULL,
+                        nota_credito_codigo TEXT
+                    );
+
+                    INSERT INTO devoluciones_new (id, venta_id, cierre_caja_id, fecha_hora, motivo, monto_subtotal, monto_descuento, monto_impuesto, monto_total, metodo_reembolso, supervisor_autorizo, cajero_solicito, nota_credito_codigo)
+                    SELECT id, venta_id, cierre_caja_id, fecha_hora, motivo, monto_subtotal, monto_descuento, monto_impuesto, monto_total, metodo_reembolso, supervisor_autorizo, cajero_solicito, nota_credito_codigo FROM devoluciones;
+
+                    DROP TABLE devoluciones;
+                    ALTER TABLE devoluciones_new RENAME TO devoluciones;
+
+                    CREATE INDEX IF NOT EXISTS idx_devoluciones_venta ON devoluciones(venta_id);
+                    
+                    PRAGMA foreign_keys = ON;
+                ";
+                mDev.ExecuteNonQuery();
+            }
+        }
+        catch { /* error ignorado */ }
+
+        // Limpieza de cotizaciones vencidas (mayores a 15 días)
+        try
+        {
+            using var m4 = conn.CreateCommand();
+            m4.CommandText = "DELETE FROM ventas WHERE estado = 'COTIZACION' AND datetime(created_at) < datetime('now', 'localtime', '-15 days');";
+            m4.ExecuteNonQuery();
+        }
+        catch { /* error ignorado */ }
+
+        // Migración: Módulo de Proveedores Avanzado
+        try
+        {
+            using var m5 = conn.CreateCommand();
+            m5.CommandText = @"
+                ALTER TABLE proveedores ADD COLUMN documento_fiscal TEXT;
+                ALTER TABLE proveedores ADD COLUMN contacto_nombre TEXT;
+                ALTER TABLE proveedores ADD COLUMN contacto_telefono TEXT;
+                ALTER TABLE proveedores ADD COLUMN contacto_email TEXT;
+                ALTER TABLE proveedores ADD COLUMN limite_credito REAL NOT NULL DEFAULT 0;
+                ALTER TABLE proveedores ADD COLUMN metodo_pago_preferido TEXT NOT NULL DEFAULT 'EFECTIVO';
+            ";
+            m5.ExecuteNonQuery();
+        }
+        catch { /* columnas ya existen */ }
+
+        try
+        {
+            using var m6 = conn.CreateCommand();
+            m6.CommandText = @"
+                CREATE TABLE IF NOT EXISTS ordenes_compra (
+                    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+                    numero          TEXT    NOT NULL UNIQUE,
+                    proveedor_id    INTEGER NOT NULL REFERENCES proveedores(id),
+                    estado          TEXT    NOT NULL DEFAULT 'BORRADOR' CHECK(estado IN ('BORRADOR', 'ENVIADA', 'RECIBIDA_PARCIAL', 'RECIBIDA_COMPLETA', 'CANCELADA')),
+                    fecha_emision   TEXT    NOT NULL DEFAULT (datetime('now','localtime')),
+                    fecha_esperada  TEXT,
+                    notas           TEXT,
+                    created_at      TEXT    NOT NULL DEFAULT (datetime('now','localtime'))
+                );
+
+                CREATE TABLE IF NOT EXISTS detalle_ordenes_compra (
+                    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+                    orden_compra_id     INTEGER NOT NULL REFERENCES ordenes_compra(id) ON DELETE CASCADE,
+                    producto_id         INTEGER NOT NULL REFERENCES productos(id),
+                    cantidad_solicitada REAL    NOT NULL CHECK(cantidad_solicitada > 0),
+                    cantidad_recibida   REAL    NOT NULL DEFAULT 0,
+                    costo_unitario      REAL    NOT NULL
+                );
+
+                CREATE TABLE IF NOT EXISTS facturas_compras (
+                    id               INTEGER PRIMARY KEY AUTOINCREMENT,
+                    orden_compra_id  INTEGER REFERENCES ordenes_compra(id),
+                    proveedor_id     INTEGER NOT NULL REFERENCES proveedores(id),
+                    numero_factura   TEXT    NOT NULL,
+                    fecha_emision    TEXT    NOT NULL DEFAULT (datetime('now','localtime')),
+                    subtotal         REAL    NOT NULL DEFAULT 0,
+                    impuesto         REAL    NOT NULL DEFAULT 0,
+                    total            REAL    NOT NULL DEFAULT 0,
+                    saldo_pendiente  REAL    NOT NULL DEFAULT 0,
+                    estado           TEXT    NOT NULL DEFAULT 'PENDIENTE' CHECK(estado IN ('PAGADA', 'PENDIENTE', 'VENCIDA')),
+                    created_at       TEXT    NOT NULL DEFAULT (datetime('now','localtime'))
+                );
+
+                CREATE TABLE IF NOT EXISTS pagos_proveedores (
+                    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+                    factura_compra_id   INTEGER NOT NULL REFERENCES facturas_compras(id),
+                    cierre_caja_id      INTEGER REFERENCES cierres_caja(id),
+                    fecha_pago          TEXT    NOT NULL DEFAULT (datetime('now','localtime')),
+                    monto               REAL    NOT NULL CHECK(monto > 0),
+                    metodo_pago         TEXT    NOT NULL,
+                    referencia          TEXT,
+                    usuario_nombre      TEXT
+                );
+
+                CREATE TABLE IF NOT EXISTS producto_proveedores (
+                    producto_id             INTEGER NOT NULL REFERENCES productos(id),
+                    proveedor_id            INTEGER NOT NULL REFERENCES proveedores(id),
+                    codigo_barra_proveedor  TEXT,
+                    PRIMARY KEY (producto_id, proveedor_id)
+                );
+            ";
+            m6.ExecuteNonQuery();
+        }
+        catch { /* error ignorado */ }
     }
 
     private static string GetSchema() => @"
@@ -73,9 +240,15 @@ public class DatabaseInitializer
             categoria_id  INTEGER REFERENCES categorias(id),
             unidad_medida TEXT    NOT NULL DEFAULT 'UND',
             imagen_path   TEXT,
+            fecha_caducidad TEXT,
             activo        INTEGER NOT NULL DEFAULT 1,
             created_at    TEXT    NOT NULL DEFAULT (datetime('now','localtime')),
             updated_at    TEXT    NOT NULL DEFAULT (datetime('now','localtime'))
+        );
+
+        CREATE TABLE IF NOT EXISTS unidades_medida (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre     TEXT    NOT NULL UNIQUE
         );
 
         CREATE TABLE IF NOT EXISTS clientes (
@@ -89,6 +262,25 @@ public class DatabaseInitializer
             direccion  TEXT,
             activo     INTEGER NOT NULL DEFAULT 1,
             created_at TEXT    NOT NULL DEFAULT (datetime('now','localtime'))
+        );
+
+        CREATE TABLE IF NOT EXISTS proveedores (
+            id                    INTEGER PRIMARY KEY AUTOINCREMENT,
+            documento             TEXT    UNIQUE,
+            documento_fiscal      TEXT,
+            nombre                TEXT    NOT NULL,
+            telefono              TEXT,
+            email                 TEXT,
+            direccion             TEXT,
+            contacto_nombre       TEXT,
+            contacto_telefono     TEXT,
+            contacto_email        TEXT,
+            dias_credito          INTEGER NOT NULL DEFAULT 0,
+            limite_credito        REAL    NOT NULL DEFAULT 0,
+            condiciones_pago      TEXT,
+            metodo_pago_preferido TEXT    NOT NULL DEFAULT 'EFECTIVO',
+            activo                INTEGER NOT NULL DEFAULT 1,
+            created_at            TEXT    NOT NULL DEFAULT (datetime('now','localtime'))
         );
 
         CREATE TABLE IF NOT EXISTS ventas (
@@ -187,6 +379,51 @@ public class DatabaseInitializer
         CREATE INDEX IF NOT EXISTS idx_movimientos_cierre
             ON movimientos_caja(cierre_caja_id);
 
+        CREATE TABLE IF NOT EXISTS devoluciones (
+            id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+            venta_id            INTEGER NOT NULL REFERENCES ventas(id),
+            cierre_caja_id      INTEGER NOT NULL REFERENCES cierres_caja(id),
+            fecha_hora          TEXT    NOT NULL DEFAULT (datetime('now','localtime')),
+            motivo              TEXT    NOT NULL,
+            monto_subtotal      REAL    NOT NULL,
+            monto_descuento     REAL    NOT NULL DEFAULT 0,
+            monto_impuesto      REAL    NOT NULL DEFAULT 0,
+            monto_total         REAL    NOT NULL,
+            metodo_reembolso    TEXT    NOT NULL CHECK(metodo_reembolso IN ('EFECTIVO', 'NOTA_CREDITO', 'TARJETA', 'TRANSFERENCIA')),
+            supervisor_autorizo TEXT    NOT NULL,
+            cajero_solicito     TEXT    NOT NULL,
+            nota_credito_codigo TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS detalle_devoluciones (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            devolucion_id INTEGER NOT NULL REFERENCES devoluciones(id) ON DELETE CASCADE,
+            producto_id   INTEGER NOT NULL REFERENCES productos(id),
+            cantidad      REAL    NOT NULL,
+            precio_unit   REAL    NOT NULL,
+            subtotal      REAL    NOT NULL,
+            estado_producto TEXT  NOT NULL CHECK(estado_producto IN ('STOCK', 'MERMA'))
+        );
+
+        CREATE TABLE IF NOT EXISTS notas_credito (
+            id               INTEGER PRIMARY KEY AUTOINCREMENT,
+            codigo           TEXT    NOT NULL UNIQUE,
+            cliente_id       INTEGER REFERENCES clientes(id),
+            monto_inicial    REAL    NOT NULL,
+            monto_disponible REAL    NOT NULL,
+            estado           TEXT    NOT NULL DEFAULT 'ACTIVA' CHECK(estado IN ('ACTIVA','USADA','VENCIDA')),
+            fecha_emision    TEXT    NOT NULL DEFAULT (datetime('now','localtime')),
+            fecha_vencimiento TEXT   NOT NULL
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_devoluciones_venta ON devoluciones(venta_id);
+        CREATE INDEX IF NOT EXISTS idx_devoluciones_cierre ON devoluciones(cierre_caja_id);
+        CREATE INDEX IF NOT EXISTS idx_notas_credito_codigo ON notas_credito(codigo);
+
+        CREATE INDEX IF NOT EXISTS idx_ordenes_compra_prov ON ordenes_compra(proveedor_id);
+        CREATE INDEX IF NOT EXISTS idx_facturas_compras_prov ON facturas_compras(proveedor_id);
+        CREATE INDEX IF NOT EXISTS idx_pagos_proveedores_factura ON pagos_proveedores(factura_compra_id);
+
         CREATE TRIGGER IF NOT EXISTS trg_bloquear_venta_dia_cerrado
         BEFORE INSERT ON ventas
         BEGIN
@@ -204,8 +441,6 @@ public class DatabaseInitializer
         INSERT OR IGNORE INTO categorias (nombre) VALUES ('Snacks');
         INSERT OR IGNORE INTO categorias (nombre) VALUES ('Limpieza');
 
-        INSERT OR IGNORE INTO clientes (nombre, apellido) VALUES ('Cliente', 'General');
-
         INSERT OR IGNORE INTO productos (codigo, nombre, precio_venta, precio_costo, stock, stock_minimo, unidad_medida, categoria_id)
         VALUES
             ('001', 'Agua mineral 500ml',        1200,  600,  50, 10, 'UND', (SELECT id FROM categorias WHERE nombre='Bebidas')),
@@ -219,6 +454,9 @@ public class DatabaseInitializer
             ('009', 'Papel higiénico x4',         3200, 2000,  30,  8, 'PAQ', (SELECT id FROM categorias WHERE nombre='Limpieza')),
             ('010', 'Azúcar 1kg',                 1900, 1200,  40, 10, 'KG',  (SELECT id FROM categorias WHERE nombre='General'));
 
+        INSERT OR IGNORE INTO unidades_medida (nombre) VALUES 
+            ('UND'), ('KG'), ('LT'), ('MT'), ('CAJA'), ('PAR'), ('PAQ');
+
         UPDATE productos SET precio_venta = 1200, precio_costo =  600, stock = 50, stock_minimo = 10 WHERE codigo = '001' AND precio_venta = 0;
         UPDATE productos SET precio_venta = 1500, precio_costo =  900, stock = 40, stock_minimo = 10 WHERE codigo = '002' AND precio_venta = 0;
         UPDATE productos SET precio_venta = 2200, precio_costo = 1400, stock = 30, stock_minimo =  5 WHERE codigo = '003' AND precio_venta = 0;
@@ -231,6 +469,8 @@ public class DatabaseInitializer
         UPDATE productos SET precio_venta = 1900, precio_costo = 1200, stock = 40, stock_minimo = 10 WHERE codigo = '010' AND precio_venta = 0;
 
         INSERT OR IGNORE INTO configuracion VALUES ('negocio_nombre',       'Comercial Perez Gonzales', 'STRING',  'NEGOCIO',   'Nombre del negocio');
+        INSERT OR IGNORE INTO configuracion VALUES ('supervisor_pin',       '1234',                      'STRING',  'SEGURIDAD', 'PIN de supervisor para devoluciones');
+        INSERT OR IGNORE INTO configuracion VALUES ('pos_password',         'admin123',                  'STRING',  'SEGURIDAD', 'Contraseña alfanumérica para iniciar el sistema');
         INSERT OR IGNORE INTO configuracion VALUES ('negocio_rut',          '',                          'STRING',  'NEGOCIO',   'RUT o identificacion fiscal');
         INSERT OR IGNORE INTO configuracion VALUES ('negocio_direccion',    '',                          'STRING',  'NEGOCIO',   'Direccion del negocio');
         INSERT OR IGNORE INTO configuracion VALUES ('negocio_telefono',     '',                          'STRING',  'NEGOCIO',   'Telefono');

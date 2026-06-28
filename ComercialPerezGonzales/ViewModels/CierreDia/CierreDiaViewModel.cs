@@ -201,7 +201,14 @@ public class CierreDiaViewModel : ViewModelBase
 
         try
         {
-            _service.RegistrarMovimiento(Jornada.Id, MovTipo, MovConcepto, monto, MovReferencia);
+            string tipoDb = MovTipo;
+            if (tipoDb != null && tipoDb.Contains(':'))
+            {
+                tipoDb = tipoDb.Split(':').Last().Trim();
+            }
+            tipoDb = (tipoDb ?? "SALIDA").ToUpper();
+
+            _service.RegistrarMovimiento(Jornada.Id, tipoDb, MovConcepto, monto, MovReferencia);
             MovConcepto = string.Empty;
             MovMontoTexto = string.Empty;
             MovReferencia = null;
@@ -257,7 +264,8 @@ public class CierreDiaViewModel : ViewModelBase
     {
         Movimientos.Clear();
         if (Jornada == null) return;
-        foreach (var m in _service.CalcularResumen(Jornada, 0).Movimientos)
+        Resumen = _service.CalcularResumen(Jornada, 0);
+        foreach (var m in Resumen.Movimientos)
             Movimientos.Add(m);
     }
 

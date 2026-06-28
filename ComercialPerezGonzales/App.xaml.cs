@@ -12,6 +12,7 @@ using ComercialPerezGonzales.ViewModels.Reportes;
 using ComercialPerezGonzales.ViewModels.Configuracion;
 using ComercialPerezGonzales.ViewModels.Tablero;
 using ComercialPerezGonzales.ViewModels.CierreDia;
+using ComercialPerezGonzales.ViewModels.Proveedores;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ComercialPerezGonzales;
@@ -40,25 +41,37 @@ public partial class App : Application
         services.AddSingleton<ProductoConversionRepository>();
         services.AddSingleton<CategoriaRepository>();
         services.AddSingleton<ClienteRepository>();
+        services.AddSingleton<ProveedorRepository>();
         services.AddSingleton<VentaRepository>();
         services.AddSingleton<ConfiguracionRepository>();
         services.AddSingleton<CierreCajaRepository>();
+        services.AddSingleton<DevolucionRepository>();
+        services.AddSingleton<OrdenCompraRepository>();
+        services.AddSingleton<FacturaCompraRepository>();
 
         services.AddSingleton<ProductoService>();
         services.AddSingleton<ProductoConversionService>();
         services.AddSingleton<ClienteService>();
+        services.AddSingleton<ProveedorService>();
         services.AddSingleton<VentaService>();
         services.AddSingleton<ReporteService>();
         services.AddSingleton<CierreCajaService>();
+        services.AddSingleton<DevolucionService>();
+        services.AddSingleton<ImageSearchService>();
+        services.AddSingleton<UnidadMedidaService>();
+        services.AddSingleton<OrdenCompraService>();
+        services.AddSingleton<FacturaCompraService>();
 
         services.AddSingleton<MainViewModel>();
-        services.AddTransient<PosViewModel>();
+        services.AddSingleton<PosViewModel>();
         services.AddTransient<ProductosViewModel>();
         services.AddTransient<ClientesViewModel>();
-        services.AddTransient<ReportesViewModel>();
-        services.AddTransient<TableroViewModel>();
+        services.AddTransient<ProveedoresViewModel>();
+        services.AddSingleton<ReportesViewModel>();
+        services.AddSingleton<TableroViewModel>();
         services.AddTransient<ConfiguracionImpresionViewModel>();
         services.AddTransient<CierreDiaViewModel>();
+        services.AddSingleton<DevolucionesViewModel>();
 
         Services = services.BuildServiceProvider();
         Services.GetRequiredService<DatabaseInitializer>().Initialize();

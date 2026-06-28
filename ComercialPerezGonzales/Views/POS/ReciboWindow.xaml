@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:Controls="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
         xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
-        Title="Recibo"
+        Title="{Binding TipoComprobante}"
         Height="680" Width="500"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
@@ -21,8 +21,8 @@
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                 <iconPacks:PackIconMaterial Kind="CheckCircle" Width="28" Height="28"
                                             Foreground="White" VerticalAlignment="Center"/>
-                <TextBlock Text="  ¡Venta Completada!" Foreground="White"
-                           FontSize="22" FontWeight="Bold" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding TituloPrincipal}" Foreground="White"
+                           FontSize="22" FontWeight="Bold" VerticalAlignment="Center" Margin="10,0,0,0"/>
             </StackPanel>
         </Border>
 
@@ -61,7 +61,7 @@
 
                     <!-- Datos de la transacción -->
                     <TextBlock FontSize="11" Foreground="Black">
-                        <Run Text="Nº Recibo: "/><Run Text="{Binding NumeroVenta}" FontWeight="SemiBold"/>
+                        <Run Text="{Binding TextoTipoDocumento, Mode=OneWay}"/><Run Text=" "/><Run Text="{Binding NumeroVenta}" FontWeight="SemiBold"/>
                     </TextBlock>
                     <TextBlock Text="{Binding FechaVenta, StringFormat='dd/M/yyyy h:mm:ss tt'}"
                                FontSize="11" Foreground="Black"/>
@@ -93,8 +93,11 @@
                                             <Run Text=" x $"/><Run Text="{Binding PrecioUnit, StringFormat={}{0:N2}}"/>
                                         </TextBlock>
                                         <TextBlock HorizontalAlignment="Right" FontSize="11" Foreground="Black"
-                                                   Text="{Binding Subtotal, StringFormat=${0:N1}}"/>
+                                                   Text="{Binding Subtotal, StringFormat=${0:N2}}"/>
                                     </Grid>
+                                    <TextBlock FontSize="10" Foreground="DimGray" HorizontalAlignment="Left" Margin="12,0,0,0"
+                                               Text="{Binding Descuento, StringFormat='Desc. -${0:N2}'}"
+                                               Visibility="{Binding HasDiscount, Converter={StaticResource BoolToVisibility}}"/>
                                 </StackPanel>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
@@ -106,10 +109,21 @@
                     <TextBlock FontSize="11" Foreground="Black">
                         <Run Text="Cantidad de artículos: "/><Run Text="{Binding CantidadArticulos, Mode=OneWay}"/>
                     </TextBlock>
+                    <Separator Background="#999" Margin="0,2" Height="1" Opacity="0.5"/>
+                    <Grid Margin="0,2,0,0" Visibility="{Binding HasDiscount, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock Text="Subtotal:" FontSize="11" Foreground="Black"/>
+                        <TextBlock HorizontalAlignment="Right" FontSize="11" Foreground="Black"
+                                   Text="{Binding Subtotal, StringFormat=${0:N2}}"/>
+                    </Grid>
+                    <Grid Margin="0,2,0,0" Visibility="{Binding HasDiscount, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock Text="Descuento:" FontSize="11" Foreground="Black"/>
+                        <TextBlock HorizontalAlignment="Right" FontSize="11" Foreground="Black"
+                                   Text="{Binding Descuento, StringFormat='-${0:N2}'}"/>
+                    </Grid>
                     <Grid Margin="0,2,0,0">
                         <TextBlock Text="TOTAL:" FontSize="13" FontWeight="Bold" Foreground="Black"/>
                         <TextBlock HorizontalAlignment="Right" FontSize="13" FontWeight="Bold" Foreground="Black"
-                                   Text="{Binding TotalVenta, StringFormat=${0:N1}}"/>
+                                   Text="{Binding TotalVenta, StringFormat=${0:N2}}"/>
                     </Grid>
 
                     <Separator Background="#BBB" Margin="0,4"/>
@@ -118,9 +132,9 @@
                     <Grid Margin="0,0,0,2">
                         <TextBlock Text="{Binding MetodoPago}" FontSize="11" Foreground="Black"/>
                         <TextBlock HorizontalAlignment="Right" FontSize="11" Foreground="Black"
-                                   Text="{Binding MontoPagado, StringFormat=${0:N1}}"/>
+                                   Text="{Binding TotalVenta, StringFormat=${0:N1}}"/>
                     </Grid>
-                    <Grid>
+                    <Grid Margin="0,0,0,2">
                         <Grid.Style>
                             <Style TargetType="Grid">
                                 <Setter Property="Visibility" Value="Collapsed"/>
@@ -135,6 +149,21 @@
                         <TextBlock HorizontalAlignment="Right" FontSize="11" Foreground="Black"
                                    Text="{Binding MontoPagado, StringFormat=${0:N1}}"/>
                     </Grid>
+                    <Grid>
+                        <Grid.Style>
+                            <Style TargetType="Grid">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding MetodoPago}" Value="EFECTIVO">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Grid.Style>
+                        <TextBlock Text="Cambio:" FontSize="11" Foreground="Black"/>
+                        <TextBlock HorizontalAlignment="Right" FontSize="11" Foreground="Black"
+                                   Text="{Binding Cambio, StringFormat=${0:N1}}"/>
+                    </Grid>
 
                     <!-- Código de barras -->
                     <Image Source="{Binding BarcodeSource}" Height="60" Stretch="Fill"
@@ -147,9 +176,9 @@
                     <Separator Background="#BBB" Width="60" HorizontalAlignment="Center" Margin="0,0,0,6"/>
 
                     <!-- Pie de página -->
-                    <TextBlock Text="{Binding PiePagina}" FontSize="11" TextAlignment="Center"
+                    <TextBlock Text="{Binding TextoPiePagina}" FontSize="11" TextAlignment="Center"
                                Foreground="Black" TextWrapping="Wrap"
-                               Visibility="{Binding PiePagina, Converter={StaticResource StringToVisibility}}"/>
+                               Visibility="{Binding TextoPiePagina, Converter={StaticResource StringToVisibility}}"/>
 
                 </StackPanel>
             </Border>
@@ -177,7 +206,7 @@
             <Button Click="Hecho_Click"
                     Background="#374151" Foreground="White" BorderThickness="0"
                     Padding="18,10" Cursor="Hand" FontSize="14">
-                Nueva Venta
+                <TextBlock Text="{Binding TextoBotonCerrar}"/>
             </Button>
         </StackPanel>
     </Grid>

@@ -197,6 +197,20 @@
                     <TextBlock Grid.Row="0" Foreground="#22C55E" FontSize="17" FontWeight="SemiBold"
                                Text="{Binding TituloGrafico}" Margin="0,0,0,12"/>
 
+                    <!-- Gridlines horizontales -->
+                    <Grid Grid.Row="1">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Rectangle Grid.Row="0" Height="1" VerticalAlignment="Bottom" Fill="#1E3A2A"/>
+                        <Rectangle Grid.Row="1" Height="1" VerticalAlignment="Bottom" Fill="#1E3A2A"/>
+                        <Rectangle Grid.Row="2" Height="1" VerticalAlignment="Bottom" Fill="#1E3A2A"/>
+                        <Rectangle Grid.Row="3" Height="1" VerticalAlignment="Bottom" Fill="#1E3A2A"/>
+                    </Grid>
+
                     <!-- Barras -->
                     <ItemsControl Grid.Row="1" ItemsSource="{Binding VentasMensuales}">
                         <ItemsControl.ItemsPanel>
@@ -206,20 +220,32 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Grid>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="*"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
-                                    <Grid Grid.Row="0" VerticalAlignment="Bottom">
-                                        <Rectangle Fill="#16A34A" Height="{Binding BarHeight}"
-                                                   VerticalAlignment="Bottom" RadiusX="3" RadiusY="3"
-                                                   Margin="4,0"/>
+                                <Border BorderBrush="#1E3A2A" BorderThickness="1,0,0,0">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="*"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <Grid Grid.Row="0" VerticalAlignment="Bottom">
+                                            <Rectangle Fill="#16A34A" Height="{Binding BarHeight}"
+                                                       VerticalAlignment="Bottom" RadiusX="3" RadiusY="3"
+                                                       Margin="4,0" ToolTipService.InitialShowDelay="0">
+                                                <Rectangle.ToolTip>
+                                                    <ToolTip Background="#0D1B2A" Foreground="White" BorderBrush="#1A2740">
+                                                        <StackPanel>
+                                                            <TextBlock Text="{Binding EtiquetaCompleta}" FontWeight="SemiBold"/>
+                                                            <TextBlock Text="{Binding TotalVentas, StringFormat='Total: ${0:N2}'}" Foreground="#4ADE80" Margin="0,4,0,0"/>
+                                                            <TextBlock Text="{Binding CantidadVentas, StringFormat='Operaciones: {0}'}" Foreground="#888"/>
+                                                        </StackPanel>
+                                                    </ToolTip>
+                                                </Rectangle.ToolTip>
+                                            </Rectangle>
+                                        </Grid>
+                                        <TextBlock Grid.Row="1" Text="{Binding NombreMes}"
+                                                   Foreground="#888" FontSize="12" TextAlignment="Center"
+                                                   Margin="0,4,0,0"/>
                                     </Grid>
-                                    <TextBlock Grid.Row="1" Text="{Binding NombreMes}"
-                                               Foreground="#888" FontSize="12" TextAlignment="Center"
-                                               Margin="0,4,0,0"/>
-                                </Grid>
+                                </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
@@ -232,12 +258,58 @@
             <!-- Panel derecho: top productos y clientes -->
             <Grid Grid.Column="1">
                 <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
+                <!-- Alertas de Vencimiento -->
+                <Border Grid.Row="0" Background="#0F1E30" Margin="6,12,12,6" CornerRadius="8" Padding="16"
+                        Visibility="{Binding AlertasVencimiento.Count, Converter={StaticResource CountToVisibility}}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                            <iconPacks:PackIconMaterial Kind="AlertDecagram" Width="18" Height="18" Foreground="#EF4444" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock Text="Alertas de Vencimiento" Foreground="#EF4444"
+                                       FontSize="15" FontWeight="Bold" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        
+                        <ScrollViewer Grid.Row="1" MaxHeight="180" VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding AlertasVencimiento}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Padding="8,6" Margin="0,0,0,4" Background="#152238" CornerRadius="4" BorderBrush="#1A2740" BorderThickness="1">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel Grid.Column="0">
+                                                    <TextBlock Text="{Binding Nombre}" Foreground="White" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                                    <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                                        <TextBlock Text="Stock: " Foreground="#888" FontSize="11"/>
+                                                        <TextBlock Text="{Binding StockEfectivo, StringFormat={}{0:N2}}" Foreground="#DDD" FontSize="11" FontWeight="SemiBold"/>
+                                                        <TextBlock Text=" " Foreground="#888" FontSize="11"/>
+                                                        <TextBlock Text="{Binding UnidadMedida}" Foreground="#888" FontSize="11"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                                <Border Grid.Column="1" Background="{Binding AlertaColor}" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding AlertaTexto}" Foreground="White" FontSize="11" FontWeight="Bold"/>
+                                                </Border>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Grid>
+                </Border>
+
                 <!-- Top Productos -->
-                <Border Grid.Row="0" Background="#0F1E30" Margin="6,12,12,6" CornerRadius="8" Padding="16">
+                <Border Grid.Row="1" Background="#0F1E30" Margin="6,6,12,6" CornerRadius="8" Padding="16">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
@@ -274,7 +346,7 @@
                 </Border>
 
                 <!-- Top Clientes -->
-                <Border Grid.Row="1" Background="#0F1E30" Margin="6,6,12,12" CornerRadius="8" Padding="16">
+                <Border Grid.Row="2" Background="#0F1E30" Margin="6,6,12,12" CornerRadius="8" Padding="16">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>

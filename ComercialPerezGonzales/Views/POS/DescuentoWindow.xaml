@@ -1,0 +1,81 @@
+<Controls:MetroWindow x:Class="ComercialPerezGonzales.Views.POS.DescuentoWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:Controls="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
+        xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+        Title="Aplicar Descuento" Height="400" Width="420"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="#0D1B2A"
+        BorderBrush="#22C55E"
+        BorderThickness="1">
+
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Cabecera -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,20">
+            <Border Width="40" Height="40" Background="#1E2D4A" CornerRadius="20" HorizontalAlignment="Left">
+                <iconPacks:PackIconMaterial Kind="Percent" Width="20" Height="20" Foreground="#22C55E" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                <TextBlock Text="Aplicar Descuento" FontSize="18" FontWeight="Bold" Foreground="White"/>
+                <TextBlock Text="Elige el destino y tipo de descuento" FontSize="12" Foreground="#888"/>
+            </StackPanel>
+        </StackPanel>
+
+        <!-- Contenido -->
+        <StackPanel Grid.Row="1">
+            <!-- Destino del Descuento -->
+            <TextBlock Text="Destino del Descuento" Foreground="#888" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,8"/>
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
+                <RadioButton x:Name="RbOrden" Content="Toda la Orden" Foreground="White" IsChecked="True" GroupName="Destino" FontSize="14" Cursor="Hand" Margin="0,0,20,0"/>
+                <RadioButton x:Name="RbItem" Content="Artículo Seleccionado" Foreground="White" GroupName="Destino" FontSize="14" Cursor="Hand" x:FieldModifier="public"/>
+            </StackPanel>
+
+            <TextBlock x:Name="TxtItemNombre" Text="Item: Agua Mineral 500ml" Foreground="#22C55E" FontSize="12" Margin="0,-12,0,16" Visibility="Collapsed" TextWrapping="Wrap"/>
+
+            <!-- Tipo de Descuento -->
+            <TextBlock Text="Tipo de Descuento" Foreground="#888" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,8"/>
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
+                <RadioButton x:Name="RbPorcentaje" Content="Porcentaje (%)" Foreground="White" IsChecked="True" GroupName="Tipo" FontSize="14" Cursor="Hand" Margin="0,0,20,0"/>
+                <RadioButton x:Name="RbMonto" Content="Monto Fijo ($)" Foreground="White" GroupName="Tipo" FontSize="14" Cursor="Hand"/>
+            </StackPanel>
+
+            <!-- Valor del Descuento -->
+            <TextBlock Text="Valor del Descuento" Foreground="#888" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,6"/>
+            <TextBox x:Name="TxtValor" Background="#0F1E3A" Foreground="White" BorderBrush="#166534" BorderThickness="1.5" Padding="8,8" FontSize="16" Margin="0,0,0,4"/>
+            <TextBlock x:Name="TxtError" Text="" Foreground="#EF4444" FontSize="12" Height="18" FontWeight="SemiBold"/>
+        </StackPanel>
+
+        <!-- Botones de Acción -->
+        <Grid Grid.Row="2" Margin="0,12,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <Button Grid.Column="0" Content="CANCELAR" Click="Cancelar_Click"
+                    Background="#374151" Foreground="White" BorderThickness="0" Padding="12" FontSize="13" FontWeight="Bold" Cursor="Hand" Margin="0,0,6,0">
+                <Button.Resources>
+                    <Style TargetType="Border">
+                        <Setter Property="CornerRadius" Value="6"/>
+                    </Style>
+                </Button.Resources>
+            </Button>
+
+            <Button Grid.Column="1" Content="APLICAR" Click="Aplicar_Click" IsDefault="True"
+                    Background="#16A34A" Foreground="White" BorderThickness="0" Padding="12" FontSize="13" FontWeight="Bold" Cursor="Hand" Margin="6,0,0,0">
+                <Button.Resources>
+                    <Style TargetType="Border">
+                        <Setter Property="CornerRadius" Value="6"/>
+                    </Style>
+                </Button.Resources>
+            </Button>
+        </Grid>
+    </Grid>
+</Controls:MetroWindow>

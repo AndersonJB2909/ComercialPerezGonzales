@@ -18,7 +18,7 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Grid.Column="0" Text="Finalizar Día"
+                <TextBlock Grid.Column="0" Text="Flujo de Caja"
                            Foreground="White" FontSize="22" FontWeight="Bold"
                            VerticalAlignment="Center" Margin="0,0,16,0"/>
 
@@ -94,11 +94,11 @@
                         <StackPanel>
                             <TextBlock Text="Resumen del Día" Foreground="#22C55E"
                                        FontSize="15" FontWeight="SemiBold" Margin="0,0,0,12"/>
-                            <UniformGrid Columns="3" >
+                            <UniformGrid Columns="5" >
                                 <Border Background="#0D1B2A" CornerRadius="6" Padding="14,10" Margin="0,0,8,0">
                                     <StackPanel>
                                         <TextBlock Text="Ventas" Foreground="#888" FontSize="12" TextAlignment="Center"/>
-                                        <TextBlock Text="{Binding Jornada.CantidadVentas}"
+                                        <TextBlock Text="{Binding Resumen.Totales.CantidadVentas}"
                                                    Foreground="White" FontSize="24" FontWeight="Bold"
                                                    TextAlignment="Center"/>
                                     </StackPanel>
@@ -106,16 +106,32 @@
                                 <Border Background="#0D1B2A" CornerRadius="6" Padding="14,10" Margin="0,0,8,0">
                                     <StackPanel>
                                         <TextBlock Text="Total Cobrado" Foreground="#888" FontSize="12" TextAlignment="Center"/>
-                                        <TextBlock Text="{Binding Jornada.TotalNeto, StringFormat=${0:N2}}"
+                                        <TextBlock Text="{Binding Resumen.Totales.Neto, StringFormat=${0:N2}}"
                                                    Foreground="#4ADE80" FontSize="20" FontWeight="Bold"
+                                                   TextAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Background="#0D1B2A" CornerRadius="6" Padding="14,10" Margin="0,0,8,0">
+                                    <StackPanel>
+                                        <TextBlock Text="Efectivo" Foreground="#888" FontSize="12" TextAlignment="Center"/>
+                                        <TextBlock Text="{Binding Resumen.Totales.Efectivo, StringFormat=${0:N2}}"
+                                                   Foreground="#4ADE80" FontSize="20" FontWeight="Bold"
+                                                   TextAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Background="#0D1B2A" CornerRadius="6" Padding="14,10" Margin="0,0,8,0">
+                                    <StackPanel>
+                                        <TextBlock Text="Tarjeta" Foreground="#888" FontSize="12" TextAlignment="Center"/>
+                                        <TextBlock Text="{Binding Resumen.Totales.Tarjetas, StringFormat=${0:N2}}"
+                                                   Foreground="#60A5FA" FontSize="20" FontWeight="Bold"
                                                    TextAlignment="Center"/>
                                     </StackPanel>
                                 </Border>
                                 <Border Background="#0D1B2A" CornerRadius="6" Padding="14,10">
                                     <StackPanel>
-                                        <TextBlock Text="Efectivo" Foreground="#888" FontSize="12" TextAlignment="Center"/>
-                                        <TextBlock Text="{Binding Jornada.TotalEfectivo, StringFormat=${0:N2}}"
-                                                   Foreground="#4ADE80" FontSize="20" FontWeight="Bold"
+                                        <TextBlock Text="Transferencia" Foreground="#888" FontSize="12" TextAlignment="Center"/>
+                                        <TextBlock Text="{Binding Resumen.Totales.Transferencias, StringFormat=${0:N2}}"
+                                                   Foreground="#F59E0B" FontSize="20" FontWeight="Bold"
                                                    TextAlignment="Center"/>
                                     </StackPanel>
                                 </Border>
@@ -151,7 +167,7 @@
                                 </DataGrid.RowStyle>
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="Hora" Width="70"
-                                        Binding="{Binding FechaHora, StringFormat=HH:mm}"/>
+                                        Binding="{Binding FechaHora, StringFormat=hh:mm tt}"/>
                                     <DataGridTextColumn Header="Tipo" Width="80"
                                         Binding="{Binding Tipo}"/>
                                     <DataGridTextColumn Header="Concepto" Width="*"
@@ -174,7 +190,7 @@
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Grid.Column="0" Margin="0,0,6,0">
                                             <TextBlock Text="Tipo" Foreground="#888" FontSize="12" Margin="0,0,0,4"/>
-                                            <ComboBox SelectedValue="{Binding MovTipo}" Padding="8,6">
+                                            <ComboBox SelectedValue="{Binding MovTipo}" SelectedValuePath="Content" Padding="8,6">
                                                 <ComboBoxItem Content="SALIDA" IsSelected="True"/>
                                                 <ComboBoxItem Content="ENTRADA"/>
                                             </ComboBox>
@@ -182,7 +198,9 @@
                                         <StackPanel Grid.Column="1" Margin="6,0,0,0">
                                             <TextBlock Text="Monto" Foreground="#888" FontSize="12" Margin="0,0,0,4"/>
                                             <TextBox Text="{Binding MovMontoTexto, UpdateSourceTrigger=PropertyChanged}"
-                                                     Padding="8,6"/>
+                                                     Padding="8,6"
+                                                     PreviewTextInput="NumericTextBox_PreviewTextInput"
+                                                     PreviewKeyDown="NumericTextBox_PreviewKeyDown"/>
                                         </StackPanel>
                                     </Grid>
                                     <StackPanel Margin="0,0,0,8">
@@ -287,7 +305,7 @@
                                        FontSize="18" FontWeight="Bold" Margin="0,0,0,4"/>
                             <TextBlock Foreground="#888" FontSize="13" Margin="0,0,0,24" TextWrapping="Wrap">
                                 <Run Text="Apertura:"/>
-                                <Run Text="{Binding Jornada.FechaApertura, StringFormat=HH:mm, Mode=OneWay}"/>
+                                <Run Text="{Binding Jornada.FechaApertura, StringFormat=hh:mm tt, Mode=OneWay}"/>
                                 <Run Text=" · Fondo inicial: $"/>
                                 <Run Text="{Binding Jornada.FondoInicial, StringFormat={}{0:N2}, Mode=OneWay}"/>
                             </TextBlock>
@@ -310,17 +328,17 @@
 
                                 <TextBlock Grid.Row="0" Grid.Column="0" Text="Efectivo" Foreground="#888" Padding="0,5"/>
                                 <TextBlock Grid.Row="0" Grid.Column="1"
-                                           Text="{Binding Jornada.TotalEfectivo, StringFormat=${0:N2}}"
+                                           Text="{Binding Resumen.Totales.Efectivo, StringFormat=${0:N2}}"
                                            Foreground="White" Padding="0,5" TextAlignment="Right"/>
 
                                 <TextBlock Grid.Row="1" Grid.Column="0" Text="Tarjeta" Foreground="#888" Padding="0,5"/>
                                 <TextBlock Grid.Row="1" Grid.Column="1"
-                                           Text="{Binding Jornada.TotalTarjetas, StringFormat=${0:N2}}"
+                                           Text="{Binding Resumen.Totales.Tarjetas, StringFormat=${0:N2}}"
                                            Foreground="White" Padding="0,5" TextAlignment="Right"/>
 
                                 <TextBlock Grid.Row="2" Grid.Column="0" Text="Transferencia" Foreground="#888" Padding="0,5"/>
                                 <TextBlock Grid.Row="2" Grid.Column="1"
-                                           Text="{Binding Jornada.TotalTransferencias, StringFormat=${0:N2}}"
+                                           Text="{Binding Resumen.Totales.Transferencias, StringFormat=${0:N2}}"
                                            Foreground="White" Padding="0,5" TextAlignment="Right"/>
 
                                 <Border Grid.Row="3" Grid.ColumnSpan="2"
@@ -329,7 +347,7 @@
                                 <TextBlock Grid.Row="4" Grid.Column="0" Text="TOTAL COBRADO"
                                            Foreground="#22C55E" FontWeight="Bold" Padding="0,6"/>
                                 <TextBlock Grid.Row="4" Grid.Column="1"
-                                           Text="{Binding Jornada.TotalNeto, StringFormat=${0:N2}}"
+                                           Text="{Binding Resumen.Totales.Neto, StringFormat=${0:N2}}"
                                            Foreground="#4ADE80" FontWeight="Bold" FontSize="16"
                                            Padding="0,6" TextAlignment="Right"/>
                             </Grid>
@@ -358,7 +376,9 @@
                                        FontSize="13" Margin="0,0,0,6"/>
                             <TextBox Text="{Binding EfectivoFisico, StringFormat={}{0:N2}, UpdateSourceTrigger=PropertyChanged}"
                                      FontSize="28" FontWeight="Bold" Padding="12,10"
-                                     Foreground="White" Margin="0,0,0,24" TextAlignment="Right"/>
+                                     Foreground="White" Margin="0,0,0,24" TextAlignment="Right"
+                                     PreviewTextInput="NumericTextBox_PreviewTextInput"
+                                     PreviewKeyDown="NumericTextBox_PreviewKeyDown"/>
 
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -504,21 +524,26 @@
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Tarjeta" Foreground="#888" Padding="0,4"/>
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Efectivo" Foreground="#888" Padding="0,4"/>
                                 <TextBlock Grid.Row="0" Grid.Column="1"
+                                           Text="{Binding Resumen.Totales.Efectivo, StringFormat=${0:N2}}"
+                                           Foreground="White" TextAlignment="Right" Padding="0,4"/>
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Tarjeta" Foreground="#888" Padding="0,4"/>
+                                <TextBlock Grid.Row="1" Grid.Column="1"
                                            Text="{Binding Resumen.Totales.Tarjetas, StringFormat=${0:N2}}"
                                            Foreground="White" TextAlignment="Right" Padding="0,4"/>
-                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Transferencia" Foreground="#888" Padding="0,4"/>
-                                <TextBlock Grid.Row="1" Grid.Column="1"
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Transferencia" Foreground="#888" Padding="0,4"/>
+                                <TextBlock Grid.Row="2" Grid.Column="1"
                                            Text="{Binding Resumen.Totales.Transferencias, StringFormat=${0:N2}}"
                                            Foreground="White" TextAlignment="Right" Padding="0,4"/>
-                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Impuesto total" Foreground="#888" Padding="0,4"/>
-                                <TextBlock Grid.Row="2" Grid.Column="1"
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="Impuesto total" Foreground="#888" Padding="0,4"/>
+                                <TextBlock Grid.Row="3" Grid.Column="1"
                                            Text="{Binding Resumen.Totales.Impuesto, StringFormat=${0:N2}}"
                                            Foreground="White" TextAlignment="Right" Padding="0,4"/>
                             </Grid>
@@ -561,7 +586,7 @@
                                                FontSize="18" FontWeight="Bold" Margin="0,0,0,4"/>
                                     <TextBlock Foreground="#6EC99E" FontSize="13">
                                         <Run Text="Cerrada a las"/>
-                                        <Run Text="{Binding Jornada.FechaCierre, StringFormat=HH:mm, Mode=OneWay}"/>
+                                        <Run Text="{Binding Jornada.FechaCierre, StringFormat=hh:mm tt, Mode=OneWay}"/>
                                         <Run Text="por"/>
                                         <Run Text="{Binding Jornada.UsuarioCierre, Mode=OneWay}"/>
                                     </TextBlock>
@@ -657,6 +682,36 @@
                                     </TextBlock.Style>
                                 </TextBlock>
                             </Border>
+
+                            <!-- Ventas por Método (Final) -->
+                            <TextBlock Text="Ventas por Método" Foreground="#888" FontSize="12"
+                                       FontWeight="Bold" Margin="0,12,0,8"/>
+                            <Grid Margin="0,0,0,20">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Efectivo" Foreground="#888" Padding="0,4"/>
+                                <TextBlock Grid.Row="0" Grid.Column="1"
+                                           Text="{Binding Jornada.TotalEfectivo, StringFormat=${0:N2}}"
+                                           Foreground="White" TextAlignment="Right" Padding="0,4"/>
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Tarjeta" Foreground="#888" Padding="0,4"/>
+                                <TextBlock Grid.Row="1" Grid.Column="1"
+                                           Text="{Binding Jornada.TotalTarjetas, StringFormat=${0:N2}}"
+                                           Foreground="White" TextAlignment="Right" Padding="0,4"/>
+
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Transferencia" Foreground="#888" Padding="0,4"/>
+                                <TextBlock Grid.Row="2" Grid.Column="1"
+                                           Text="{Binding Jornada.TotalTransferencias, StringFormat=${0:N2}}"
+                                           Foreground="White" TextAlignment="Right" Padding="0,4"/>
+                            </Grid>
 
                             <TextBlock Text="{Binding Jornada.Observaciones}"
                                        Foreground="#888" FontSize="12" TextWrapping="Wrap"

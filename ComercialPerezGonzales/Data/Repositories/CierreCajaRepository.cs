@@ -78,7 +78,7 @@ public class CierreCajaRepository
     public TotalesDia GetTotalesDia(string fechaJornada)
     {
         using var conn = _context.CreateConnection();
-        return conn.QueryFirstOrDefault<TotalesDia>(@"
+        var v = conn.QueryFirstOrDefault<TotalesDia>(@"
             SELECT
                 COALESCE(SUM(CASE WHEN metodo_pago = 'EFECTIVO'      THEN total ELSE 0 END), 0) AS Efectivo,
                 COALESCE(SUM(CASE WHEN metodo_pago = 'TARJETA'       THEN total ELSE 0 END), 0) AS Tarjetas,
@@ -92,6 +92,32 @@ public class CierreCajaRepository
             WHERE estado = 'COMPLETADA'
               AND date(created_at) = @fechaJornada",
             new { fechaJornada }) ?? new TotalesDia();
+
+        var r = conn.QueryFirstOrDefault<dynamic>(@"
+            SELECT
+                COALESCE(SUM(CASE WHEN metodo_reembolso = 'EFECTIVO' THEN monto_total ELSE 0 END), 0) as DevEfectivo,
+                COALESCE(SUM(CASE WHEN metodo_reembolso = 'TARJETA'  THEN monto_total ELSE 0 END), 0) as DevTarjetas,
+                COALESCE(SUM(CASE WHEN metodo_reembolso = 'TRANSFERENCIA' THEN monto_total ELSE 0 END), 0) as DevTransferencias,
+                COALESCE(SUM(monto_subtotal), 0) as DevSubtotal,
+                COALESCE(SUM(monto_descuento), 0) as DevDescuento,
+                COALESCE(SUM(monto_impuesto), 0) as DevImpuesto,
+                COALESCE(SUM(monto_total), 0) as DevTotal
+            FROM devoluciones
+            WHERE date(fecha_hora) = @fechaJornada",
+            new { fechaJornada });
+
+        if (r != null)
+        {
+            v.Efectivo = Math.Max(0, v.Efectivo - Convert.ToDecimal(r.DevEfectivo ?? 0));
+            v.Tarjetas = Math.Max(0, v.Tarjetas - Convert.ToDecimal(r.DevTarjetas ?? 0));
+            v.Transferencias = Math.Max(0, v.Transferencias - Convert.ToDecimal(r.DevTransferencias ?? 0));
+            v.Bruto = Math.Max(0, v.Bruto - Convert.ToDecimal(r.DevSubtotal ?? 0));
+            v.Descuentos = Math.Max(0, v.Descuentos - Convert.ToDecimal(r.DevDescuento ?? 0));
+            v.Impuesto = Math.Max(0, v.Impuesto - Convert.ToDecimal(r.DevImpuesto ?? 0));
+            v.Neto = Math.Max(0, v.Neto - Convert.ToDecimal(r.DevTotal ?? 0));
+        }
+
+        return v;
     }
 
     public List<AlertaStockItem> GetProductosBajoStock()

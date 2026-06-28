@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel;
 
 namespace ComercialPerezGonzales.Models;
@@ -12,9 +13,27 @@ public class Producto : INotifyPropertyChanged
     public decimal PrecioCosto { get; set; }
     public decimal Stock { get; set; }
     public decimal StockMinimo { get; set; }
-    public int? CategoriaId { get; set; }
+    private int? _categoriaId;
+    public int? CategoriaId
+    {
+        get => _categoriaId;
+        set { _categoriaId = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CategoriaId))); }
+    }
     public string UnidadMedida { get; set; } = "UND";
     public bool Activo { get; set; } = true;
+
+    private DateTime? _fechaCaducidad;
+    public DateTime? FechaCaducidad
+    {
+        get => _fechaCaducidad;
+        set { _fechaCaducidad = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(FechaCaducidad))); }
+    }
+
+    public int DiasParaVencer => FechaCaducidad.HasValue ? (FechaCaducidad.Value.Date - DateTime.Today).Days : 9999;
+    public bool EstaVencido => FechaCaducidad.HasValue && DiasParaVencer < 0;
+    public bool PorVencer => FechaCaducidad.HasValue && DiasParaVencer >= 0 && FechaCaducidad.Value.Date <= DateTime.Today.AddMonths(3);
+    public string AlertaTexto => EstaVencido ? "Vencido" : $"Vence en {DiasParaVencer} días";
+    public string AlertaColor => EstaVencido ? "#EF4444" : "#F59E0B";
 
     private string? _imagenPath;
     private byte[]? _imagenData;

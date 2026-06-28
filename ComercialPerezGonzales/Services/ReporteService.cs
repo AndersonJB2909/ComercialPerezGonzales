@@ -58,6 +58,7 @@ public class ReporteService
         {
             Mes = m,
             NombreMes = meses[m - 1],
+            EtiquetaCompleta = $"Mes: {meses[m - 1]}",
             TotalVentas = datos.ContainsKey(m) ? datos[m].Total : 0,
             CantidadVentas = datos.ContainsKey(m) ? datos[m].Cantidad : 0
         }).ToList();
@@ -77,7 +78,8 @@ public class ReporteService
             var k = d.ToString("yyyy-MM-dd");
             return new VentaMensual
             {
-                NombreMes      = i % 5 == 0 ? d.ToString("d/M") : string.Empty,
+                NombreMes      = i % 5 == 0 ? d.ToString("d MMM") : string.Empty,
+                EtiquetaCompleta = $"Día: {d.ToString("d MMM")}",
                 TotalVentas    = datos.TryGetValue(k, out var r) ? r.TotalVentas    : 0,
                 CantidadVentas = datos.TryGetValue(k, out var r2) ? r2.CantidadVentas : 0
             };
@@ -99,6 +101,7 @@ public class ReporteService
         var lista = Enumerable.Range(1, 52).Select(w => new VentaMensual
         {
             NombreMes      = w % 4 == 1 ? $"S{w}" : string.Empty,
+            EtiquetaCompleta = $"Semana: {w}",
             TotalVentas    = datos.TryGetValue(w, out var r) ? r.Total    : 0,
             CantidadVentas = datos.TryGetValue(w, out var r2) ? r2.Cantidad : 0
         }).ToList();
@@ -121,6 +124,7 @@ public class ReporteService
         var lista = Enumerable.Range(desde, 5).Select(y => new VentaMensual
         {
             NombreMes      = y.ToString(),
+            EtiquetaCompleta = $"Año: {y}",
             TotalVentas    = datos.TryGetValue(y, out var r) ? r.Total    : 0,
             CantidadVentas = datos.TryGetValue(y, out var r2) ? r2.Cantidad : 0
         }).ToList();
@@ -186,6 +190,7 @@ public class VentaMensual
 {
     public int Mes { get; set; }
     public string NombreMes { get; set; } = string.Empty;
+    public string EtiquetaCompleta { get; set; } = string.Empty;
     public decimal TotalVentas { get; set; }
     public int CantidadVentas { get; set; }
     public double BarHeight { get; set; }

@@ -1,7 +1,24 @@
-﻿<UserControl x:Class="ComercialPerezGonzales.Views.Reportes.ReportesView"
+<UserControl x:Class="ComercialPerezGonzales.Views.Reportes.ReportesView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks">
+
+    <UserControl.Resources>
+        <Style x:Key="ReportPeriodBtnStyle" TargetType="Button">
+            <Setter Property="Background" Value="#1E293B"/>
+            <Setter Property="Foreground" Value="#CCCCCC"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#334155"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
 
     <Grid Background="#0D1B2A">
         <Grid.RowDefinitions>
@@ -11,51 +28,170 @@
         </Grid.RowDefinitions>
 
         <!-- Toolbar -->
-        <Border Grid.Row="0" Background="#152238" Padding="16,12">
+        <Border Grid.Row="0" Background="#152238" Padding="16,12" BorderThickness="0,0,0,1" BorderBrush="#1A2740">
             <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
 
-                <TextBlock Grid.Column="0" Text="Reportes" Foreground="White"
-                           FontSize="22" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,20,0"/>
+                <!-- Fila 0: Título y Filtros Manuales -->
+                <Grid Grid.Row="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
-                    <TextBlock Text="Desde:" Foreground="#888" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                    <DatePicker SelectedDate="{Binding Desde}" FontSize="15" Width="130"/>
-                </StackPanel>
+                    <TextBlock Grid.Column="0" Text="Reportes" Foreground="White"
+                               FontSize="22" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,20,0"/>
 
-                <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
-                    <TextBlock Text="Hasta:" Foreground="#888" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                    <DatePicker SelectedDate="{Binding Hasta}" FontSize="15" Width="130"/>
-                </StackPanel>
-
-                <Button Grid.Column="4" Command="{Binding HoyCommand}"
-                        Background="#374151" Foreground="White" BorderThickness="0"
-                        Padding="12,8" Margin="0,0,8,0" Cursor="Hand" FontSize="15">
-                    Hoy
-                </Button>
-
-                <Button Grid.Column="5" Command="{Binding EsteMesCommand}"
-                        Background="#374151" Foreground="White" BorderThickness="0"
-                        Padding="12,8" Margin="0,0,8,0" Cursor="Hand" FontSize="15">
-                    Este Mes
-                </Button>
-
-                <Button Grid.Column="6" Command="{Binding ActualizarCommand}"
-                        Background="#16A34A" Foreground="White" BorderThickness="0"
-                        Padding="12,8" Cursor="Hand" FontSize="15">
-                    <StackPanel Orientation="Horizontal">
-                        <iconPacks:PackIconMaterial Kind="Refresh" Width="14" Height="14" VerticalAlignment="Center"/>
-                        <TextBlock Text=" Actualizar" VerticalAlignment="Center"/>
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+                        <TextBlock Text="Desde:" Foreground="#888" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <DatePicker SelectedDate="{Binding Desde}" FontSize="15" Width="130"/>
                     </StackPanel>
-                </Button>
+
+                    <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+                        <TextBlock Text="Hasta:" Foreground="#888" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <DatePicker SelectedDate="{Binding Hasta}" FontSize="15" Width="130"/>
+                    </StackPanel>
+
+                    <Button Grid.Column="4" Command="{Binding ActualizarCommand}"
+                            Background="#16A34A" Foreground="White" BorderThickness="0"
+                            Padding="16,8" Cursor="Hand" FontSize="15" FontWeight="SemiBold">
+                        <StackPanel Orientation="Horizontal">
+                            <iconPacks:PackIconMaterial Kind="Refresh" Width="14" Height="14" VerticalAlignment="Center"/>
+                            <TextBlock Text=" Actualizar" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </Grid>
+
+                <!-- Fila 1: Períodos Rápidos -->
+                <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,12,0,0">
+                    <TextBlock Text="Período:" Foreground="#888" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="14"/>
+
+                    <Button Command="{Binding SeleccionarPeriodoCommand}" CommandParameter="Hoy" Content="Hoy" Margin="0,0,8,0">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource ReportPeriodBtnStyle}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsHoySelected}" Value="True">
+                                        <Setter Property="Background" Value="#22C55E"/>
+                                        <Setter Property="BorderBrush" Value="#22C55E"/>
+                                        <Setter Property="Foreground" Value="White"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+
+                    <Button Command="{Binding SeleccionarPeriodoCommand}" CommandParameter="Ayer" Content="Ayer" Margin="0,0,8,0">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource ReportPeriodBtnStyle}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsAyerSelected}" Value="True">
+                                        <Setter Property="Background" Value="#22C55E"/>
+                                        <Setter Property="BorderBrush" Value="#22C55E"/>
+                                        <Setter Property="Foreground" Value="White"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+
+                    <Button Command="{Binding SeleccionarPeriodoCommand}" CommandParameter="Esta semana" Content="Esta semana" Margin="0,0,8,0">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource ReportPeriodBtnStyle}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsEstaSemanaSelected}" Value="True">
+                                        <Setter Property="Background" Value="#22C55E"/>
+                                        <Setter Property="BorderBrush" Value="#22C55E"/>
+                                        <Setter Property="Foreground" Value="White"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+
+                    <Button Command="{Binding SeleccionarPeriodoCommand}" CommandParameter="Última semana" Content="Última semana" Margin="0,0,8,0">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource ReportPeriodBtnStyle}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsUltimaSemanaSelected}" Value="True">
+                                        <Setter Property="Background" Value="#22C55E"/>
+                                        <Setter Property="BorderBrush" Value="#22C55E"/>
+                                        <Setter Property="Foreground" Value="White"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+
+                    <Button Command="{Binding SeleccionarPeriodoCommand}" CommandParameter="Este mes" Content="Este mes" Margin="0,0,8,0">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource ReportPeriodBtnStyle}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsEsteMesSelected}" Value="True">
+                                        <Setter Property="Background" Value="#22C55E"/>
+                                        <Setter Property="BorderBrush" Value="#22C55E"/>
+                                        <Setter Property="Foreground" Value="White"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+
+                    <Button Command="{Binding SeleccionarPeriodoCommand}" CommandParameter="Último mes" Content="Último mes" Margin="0,0,8,0">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource ReportPeriodBtnStyle}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsUltimoMesSelected}" Value="True">
+                                        <Setter Property="Background" Value="#22C55E"/>
+                                        <Setter Property="BorderBrush" Value="#22C55E"/>
+                                        <Setter Property="Foreground" Value="White"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+
+                    <Button Command="{Binding SeleccionarPeriodoCommand}" CommandParameter="Este año" Content="Este año" Margin="0,0,8,0">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource ReportPeriodBtnStyle}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsEsteAnoSelected}" Value="True">
+                                        <Setter Property="Background" Value="#22C55E"/>
+                                        <Setter Property="BorderBrush" Value="#22C55E"/>
+                                        <Setter Property="Foreground" Value="White"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+
+                    <Button Command="{Binding SeleccionarPeriodoCommand}" CommandParameter="Último año" Content="Último año" Margin="0,0,8,0">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource ReportPeriodBtnStyle}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsUltimoAnoSelected}" Value="True">
+                                        <Setter Property="Background" Value="#22C55E"/>
+                                        <Setter Property="BorderBrush" Value="#22C55E"/>
+                                        <Setter Property="Foreground" Value="White"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </StackPanel>
             </Grid>
         </Border>
 
@@ -115,15 +251,15 @@
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <!-- Ventas por día -->
+            <!-- Historial de Ventas -->
             <Grid Grid.Column="0" Margin="12,12,6,12">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
-                <TextBlock Grid.Row="0" Text="Ventas por Día" Foreground="#22C55E"
+                <TextBlock Grid.Row="0" Text="Historial de Ventas" Foreground="#22C55E"
                            FontSize="17" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                <DataGrid Grid.Row="1" ItemsSource="{Binding VentasPorDia}"
+                <DataGrid Grid.Row="1" ItemsSource="{Binding HistorialVentas}"
                           AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
                           Background="#0D1B2A" Foreground="White" BorderThickness="0"
                           GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#1A2740"
@@ -142,9 +278,48 @@
                         </Style>
                     </DataGrid.RowStyle>
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Fecha" Binding="{Binding Fecha}" Width="*"/>
-                        <DataGridTextColumn Header="Cantidad" Binding="{Binding CantidadVentas}" Width="80"/>
-                        <DataGridTextColumn Header="Total" Binding="{Binding TotalVentas, StringFormat=${0:N2}}" Width="110"/>
+                        <DataGridTextColumn Header="Número" Binding="{Binding Numero}" Width="80"/>
+                        <DataGridTextColumn Header="Fecha/Hora" Binding="{Binding CreatedAt, StringFormat=\{0:dd/MM/yyyy hh:mm tt\}}" Width="120"/>
+                        <DataGridTextColumn Header="Cliente" Binding="{Binding ClienteNombre}" Width="*"/>
+                        <DataGridTextColumn Header="Estado" Binding="{Binding Estado}" Width="90"/>
+                        <DataGridTextColumn Header="Total" Binding="{Binding Total, StringFormat=${0:N2}}" Width="90"/>
+                        
+                        <DataGridTemplateColumn Header="" Width="160">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button Background="#374151" Foreground="White" BorderThickness="0" 
+                                                Padding="8,4" Cursor="Hand" Margin="2"
+                                                Command="{Binding DataContext.ReimprimirCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <iconPacks:PackIconMaterial Kind="Printer" Width="12" Height="12" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                                <TextBlock Text="Imprimir" FontSize="11" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Background="#2563EB" Foreground="White" BorderThickness="0" 
+                                                Padding="8,4" Cursor="Hand" Margin="2"
+                                                Command="{Binding DataContext.CargarEnPosCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Estado}" Value="COTIZACION">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                            <StackPanel Orientation="Horizontal">
+                                                <iconPacks:PackIconMaterial Kind="CartArrowUp" Width="12" Height="12" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                                <TextBlock Text="Cargar" FontSize="11" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
                     </DataGrid.Columns>
                 </DataGrid>
             </Grid>

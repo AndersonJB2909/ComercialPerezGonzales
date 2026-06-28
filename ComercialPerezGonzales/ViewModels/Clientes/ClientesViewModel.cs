@@ -92,14 +92,14 @@ public class ClientesViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+            AppDialog.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
 
     private void Eliminar()
     {
         if (Selected == null) return;
-        var r = MessageBox.Show($"¿Eliminar a '{Selected.NombreCompleto}'?", "Confirmar", MessageBoxButton.YesNo, MessageBoxImage.Question);
+        var r = AppDialog.Show($"¿Eliminar a '{Selected.NombreCompleto}'?", "Confirmar", MessageBoxButton.YesNo, MessageBoxImage.Question);
         if (r == MessageBoxResult.Yes)
         {
             _service.Eliminar(Selected.Id);

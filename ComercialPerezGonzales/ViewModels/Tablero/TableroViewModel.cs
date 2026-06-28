@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using ComercialPerezGonzales.Models;
 using ComercialPerezGonzales.Services;
 using ComercialPerezGonzales.ViewModels.Base;
 
@@ -10,6 +11,7 @@ public class TableroViewModel : ViewModelBase
 {
     private readonly ReporteService _service;
     private readonly VentaService _ventaService;
+    private readonly ProductoService _productoService;
     private int _anioSeleccionado = DateTime.Today.Year;
     private ResumenCaja _resumenHoy = new();
     private decimal _totalMes;
@@ -19,6 +21,7 @@ public class TableroViewModel : ViewModelBase
     public ObservableCollection<VentaMensual> VentasMensuales { get; } = new();
     public ObservableCollection<ResumenProducto> TopProductos { get; } = new();
     public ObservableCollection<ResumenCliente> TopClientes { get; } = new();
+    public ObservableCollection<Producto> AlertasVencimiento { get; } = new();
 
     public int AnioSeleccionado
     {
@@ -33,6 +36,7 @@ public class TableroViewModel : ViewModelBase
         {
             SetProperty(ref _periodo, value);
             OnPropertyChanged(nameof(TituloGrafico));
+            OnPropertyChanged(nameof(EtiquetaPeriodo));
             OnPropertyChanged(nameof(EsDiario));
             OnPropertyChanged(nameof(EsSemanal));
             OnPropertyChanged(nameof(EsMensual));
@@ -47,6 +51,14 @@ public class TableroViewModel : ViewModelBase
         PeriodoGrafico.Semanal  => $"Ventas Semanales {_anioSeleccionado}",
         PeriodoGrafico.Anual    => $"Ventas Anuales ({_anioSeleccionado - 4}–{_anioSeleccionado})",
         _                       => $"Ventas Mensuales {_anioSeleccionado}",
+    };
+
+    public string EtiquetaPeriodo => _periodo switch
+    {
+        PeriodoGrafico.Diario   => "Día",
+        PeriodoGrafico.Semanal  => "Semana",
+        PeriodoGrafico.Anual    => "Año",
+        _                       => "Mes",
     };
 
     public bool EsDiario  => _periodo == PeriodoGrafico.Diario;
@@ -80,10 +92,11 @@ public class TableroViewModel : ViewModelBase
     public RelayCommand PeriodoMensualCommand  { get; }
     public RelayCommand PeriodoAnualCommand    { get; }
 
-    public TableroViewModel(ReporteService service, VentaService ventaService)
+    public TableroViewModel(ReporteService service, VentaService ventaService, ProductoService productoService)
     {
         _service = service;
         _ventaService = ventaService;
+        _productoService = productoService;
         AnioAnteriorCommand    = new RelayCommand(() => AnioSeleccionado--);
         AnioSiguienteCommand   = new RelayCommand(() => AnioSeleccionado++);
         ActualizarCommand      = new RelayCommand(Actualizar);
@@ -109,7 +122,7 @@ public class TableroViewModel : ViewModelBase
         OnPropertyChanged(nameof(TituloGrafico));
     }
 
-    private void Actualizar()
+    public void Actualizar()
     {
         ActualizarGrafico();
 
@@ -124,5 +137,10 @@ public class TableroViewModel : ViewModelBase
 
         ResumenHoy = _service.GetResumenCaja(DateTime.Today);
         TotalMes = _service.GetVentasPorDia(inicioMes, DateTime.Today).Sum(v => v.TotalVentas);
+
+        AlertasVencimiento.Clear();
+        int diasThreshold = (DateTime.Today.AddMonths(3) - DateTime.Today).Days;
+        foreach (var p in _productoService.GetProductosPorVencer(diasThreshold))
+            AlertasVencimiento.Add(p);
     }
 }

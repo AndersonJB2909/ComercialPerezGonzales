@@ -14,11 +14,22 @@ public class ReciboViewModel
     public string   NumeroVenta   { get; set; } = string.Empty;
     public DateTime FechaVenta    { get; set; } = DateTime.Now;
     public decimal  TotalVenta    { get; set; }
+    public decimal  Subtotal      { get; set; }
+    public decimal  Descuento     { get; set; }
+    public bool     HasDiscount   => Descuento > 0;
     public decimal  MontoPagado   { get; set; }
     public decimal  Cambio        => MontoPagado - TotalVenta;
     public string   MetodoPago    { get; set; } = "EFECTIVO";
     public string   NombreCliente { get; set; } = "Cliente General";
     public int      OrdenId       { get; set; }
+    
+    public bool   EsCotizacion  => MetodoPago == "COTIZACION";
+    public string TituloPrincipal => EsCotizacion ? "¡Cotización Guardada!" : "¡Venta Completada!";
+    public string TextoTipoDocumento => EsCotizacion ? "Nº Cotización:" : "Nº Recibo:";
+    public string TipoComprobante => EsCotizacion ? "COTIZACIÓN" : "RECIBO";
+    
+    public string TextoPiePagina => EsCotizacion ? "ESTA COTIZACIÓN ES VÁLIDA POR 15 DÍAS." : PiePagina;
+    public string TextoBotonCerrar => EsCotizacion ? "Cerrar" : "Nueva Venta";
 
     // Datos del negocio (vienen de configuracion)
     public string NombreNegocio { get; set; } = string.Empty;

@@ -81,8 +81,8 @@ public class ProductoRepository
     {
         using var conn = _context.CreateConnection();
         return conn.ExecuteScalar<int>(@"
-            INSERT INTO productos (codigo, nombre, descripcion, precio_venta, precio_costo, stock, stock_minimo, categoria_id, unidad_medida, imagen_path, imagen_data, activo)
-            VALUES (@Codigo, @Nombre, @Descripcion, @PrecioVenta, @PrecioCosto, @Stock, @StockMinimo, @CategoriaId, @UnidadMedida, @ImagenPath, @ImagenData, 1);
+            INSERT INTO productos (codigo, nombre, descripcion, precio_venta, precio_costo, stock, stock_minimo, categoria_id, unidad_medida, imagen_path, imagen_data, activo, fecha_caducidad)
+            VALUES (@Codigo, @Nombre, @Descripcion, @PrecioVenta, @PrecioCosto, @Stock, @StockMinimo, @CategoriaId, @UnidadMedida, @ImagenPath, @ImagenData, 1, @FechaCaducidad);
             SELECT last_insert_rowid();", p);
     }
 
@@ -95,6 +95,7 @@ public class ProductoRepository
                 precio_venta = @PrecioVenta, precio_costo = @PrecioCosto,
                 stock = @Stock, stock_minimo = @StockMinimo, categoria_id = @CategoriaId,
                 unidad_medida = @UnidadMedida, imagen_path = @ImagenPath, imagen_data = @ImagenData,
+                fecha_caducidad = @FechaCaducidad,
                 updated_at = datetime('now','localtime')
             WHERE id = @Id", p);
     }
@@ -104,6 +105,14 @@ public class ProductoRepository
         using var conn = _context.CreateConnection();
         conn.Execute("UPDATE productos SET stock = stock + @cantidad, updated_at = datetime('now','localtime') WHERE id = @id",
             new { id, cantidad });
+    }
+
+    public void UpdateImagen(int id, byte[] imagen)
+    {
+        using var conn = _context.CreateConnection();
+        conn.Execute(@"UPDATE productos SET imagen_data = @imagen,
+            updated_at = datetime('now','localtime') WHERE id = @id",
+            new { id, imagen });
     }
 
     public void Delete(int id)
@@ -132,6 +141,59 @@ public class ProductoRepository
             new { id }) > 0;
     }
 
+    public IEnumerable<Producto> GetPaged(int page, int pageSize, string searchText, List<int> categoryIds, List<string> units, out int totalCount)
+    {
+        using var conn = _context.CreateConnection();
+        
+        var conditions = new List<string> { "p.activo = 1" };
+        var parameters = new DynamicParameters();
+        
+        if (!string.IsNullOrWhiteSpace(searchText))
+        {
+            var searchPattern = $"%{searchText.Trim()}%";
+            conditions.Add("(p.nombre LIKE @search OR p.codigo LIKE @search OR c.nombre LIKE @search)");
+            parameters.Add("@search", searchPattern);
+        }
+        
+        if (categoryIds != null && categoryIds.Any())
+        {
+            conditions.Add("p.categoria_id IN @categoryIds");
+            parameters.Add("@categoryIds", categoryIds);
+        }
+        
+        if (units != null && units.Any())
+        {
+            conditions.Add("p.unidad_medida IN @units");
+            parameters.Add("@units", units);
+        }
+        
+        var whereClause = string.Join(" AND ", conditions);
+        
+        var countSql = $@"
+            SELECT COUNT(*) 
+            FROM productos p
+            LEFT JOIN categorias c ON p.categoria_id = c.id
+            WHERE {whereClause}";
+            
+        totalCount = conn.ExecuteScalar<int>(countSql, parameters);
+        
+        var offset = (page - 1) * pageSize;
+        parameters.Add("@pageSize", pageSize);
+        parameters.Add("@offset", offset);
+        
+        var dataSql = $@"
+            SELECT p.*, c.nombre as CategoriaNombre
+            FROM productos p
+            LEFT JOIN categorias c ON p.categoria_id = c.id
+            WHERE {whereClause}
+            ORDER BY p.nombre
+            LIMIT @pageSize OFFSET @offset";
+            
+        var productos = conn.Query<Producto>(dataSql, parameters).ToList();
+        CargarConversiones(productos);
+        return productos;
+    }
+
     private void CargarConversiones(IEnumerable<Producto> productos)
     {
         using var conn = _context.CreateConnection();
@@ -154,5 +216,19 @@ public class ProductoRepository
             if (conversiones.TryGetValue(prod.Id, out var conv))
                 prod.Conversion = conv;
         }
+    }
+
+    public IEnumerable<Producto> GetProductosPorVencer(int diasThreshold)
+    {
+        using var conn = _context.CreateConnection();
+        var productos = conn.Query<Producto>(@"
+            SELECT p.*, c.nombre as CategoriaNombre
+            FROM productos p
+            LEFT JOIN categorias c ON p.categoria_id = c.id
+            WHERE p.activo = 1 AND p.fecha_caducidad IS NOT NULL
+              AND date(p.fecha_caducidad) <= date('now', 'localtime', '+' || @diasThreshold || ' days')
+            ORDER BY p.fecha_caducidad ASC", new { diasThreshold }).ToList();
+        CargarConversiones(productos);
+        return productos;
     }
 }

@@ -15,7 +15,11 @@
              xmlns:vmconf="clr-namespace:ComercialPerezGonzales.ViewModels.Configuracion"
              xmlns:viewsconf="clr-namespace:ComercialPerezGonzales.Views.Configuracion"
              xmlns:vmcd="clr-namespace:ComercialPerezGonzales.ViewModels.CierreDia"
-             xmlns:viewscd="clr-namespace:ComercialPerezGonzales.Views.CierreDia">
+             xmlns:viewscd="clr-namespace:ComercialPerezGonzales.Views.CierreDia"
+             xmlns:vmp="clr-namespace:ComercialPerezGonzales.ViewModels.Proveedores"
+             xmlns:viewsp="clr-namespace:ComercialPerezGonzales.Views.Proveedores"
+             xmlns:vml="clr-namespace:ComercialPerezGonzales.ViewModels.Login"
+             xmlns:viewsl="clr-namespace:ComercialPerezGonzales.Views.Login">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -148,6 +152,35 @@
             </Style>
             <Style TargetType="DatePicker">
                 <Setter Property="FontSize" Value="14"/>
+                <Setter Property="Background" Value="#152238"/>
+                <Setter Property="Foreground" Value="White"/>
+                <Setter Property="BorderBrush" Value="#1A2740"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Padding" Value="4,2"/>
+                <Style.Resources>
+                    <Style TargetType="DatePickerTextBox">
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Setter Property="Foreground" Value="White"/>
+                        <Setter Property="SelectionBrush" Value="#22C55E"/>
+                        <Setter Property="BorderThickness" Value="0"/>
+                        <Setter Property="VerticalContentAlignment" Value="Center"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="DatePickerTextBox">
+                                    <Grid>
+                                        <ScrollViewer x:Name="PART_ContentHost" 
+                                                      Focusable="False" 
+                                                      HorizontalScrollBarVisibility="Hidden" 
+                                                      VerticalScrollBarVisibility="Hidden" 
+                                                      Background="Transparent"
+                                                      VerticalAlignment="Center"
+                                                      Margin="4,0"/>
+                                    </Grid>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </Style.Resources>
             </Style>
 
             <converters:BoolToVisibilityConverter x:Key="BoolToVisibility" />
@@ -161,11 +194,17 @@
             <converters:ByteArrayToVisibilityConverter x:Key="BytesToVisibility" />
             <converters:ByteArrayToInverseVisibilityConverter x:Key="BytesToInverseVisibility" />
 
+            <DataTemplate DataType="{x:Type vml:LoginViewModel}">
+                <viewsl:LoginView />
+            </DataTemplate>
             <DataTemplate DataType="{x:Type vmt:TableroViewModel}">
                 <viewst:TableroView />
             </DataTemplate>
             <DataTemplate DataType="{x:Type vm:PosViewModel}">
                 <views:PosView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:DevolucionesViewModel}">
+                <views:DevolucionesView />
             </DataTemplate>
             <DataTemplate DataType="{x:Type vmi:ProductosViewModel}">
                 <viewsi:ProductosView />
@@ -181,6 +220,9 @@
             </DataTemplate>
             <DataTemplate DataType="{x:Type vmcd:CierreDiaViewModel}">
                 <viewscd:CierreDiaView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vmp:ProveedoresViewModel}">
+                <viewsp:ProveedoresView />
             </DataTemplate>
         </ResourceDictionary>
     </Application.Resources>

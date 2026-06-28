@@ -20,7 +20,7 @@ public class VentaService
         _conversionService = conversionService;
     }
 
-    public Venta ProcesarVenta(List<ItemCarrito> carrito, int? clienteId, string metodoPago, decimal montoRecibido, decimal descuentoGlobal = 0)
+    public Venta ProcesarVenta(List<ItemCarrito> carrito, int? clienteId, string metodoPago, decimal montoRecibido, decimal descuentoGlobal = 0, string? notaCreditoCodigo = null)
     {
         if (!carrito.Any()) throw new InvalidOperationException("El carrito está vacío.");
 
@@ -58,8 +58,24 @@ public class VentaService
             var total = baseImponible + impuesto;
             var cambio = montoRecibido - total;
 
-            if (montoRecibido < total && metodoPago == "EFECTIVO")
+            if (metodoPago == "NOTA_CREDITO")
+            {
+                if (string.IsNullOrWhiteSpace(notaCreditoCodigo))
+                    throw new InvalidOperationException("Código de Nota de Crédito no proporcionado.");
+
+                var devService = (ComercialPerezGonzales.Services.DevolucionService)App.Services.GetService(typeof(ComercialPerezGonzales.Services.DevolucionService))!;
+                var nc = devService.ValidarNotaCredito(notaCreditoCodigo.Trim().ToUpper(), total);
+                if (nc == null)
+                    throw new InvalidOperationException("Nota de Crédito no válida.");
+
+                devService.ConsumirNotaCredito(notaCreditoCodigo.Trim().ToUpper(), total);
+                montoRecibido = total;
+                cambio = 0;
+            }
+            else if (montoRecibido < total && metodoPago == "EFECTIVO")
+            {
                 throw new InvalidOperationException($"Monto insuficiente. Falta: {total - montoRecibido:F2}");
+            }
 
             var venta = new Venta
             {
@@ -86,6 +102,63 @@ public class VentaService
         }
     }
 
+    public Venta ProcesarCotizacion(List<ItemCarrito> carrito, int? clienteId, decimal descuentoGlobal = 0)
+    {
+        if (!carrito.Any()) throw new InvalidOperationException("El carrito está vacío.");
+
+        lock (_ventaLock)
+        {
+            var impuestoPct = decimal.Parse(_configRepo.GetValor("impuesto_porcentaje") ?? "0");
+
+            var detalles = new List<DetalleVenta>();
+            decimal subtotal = 0;
+
+            foreach (var item in carrito)
+            {
+                var producto = _productoRepo.GetById(item.ProductoId)
+                    ?? throw new InvalidOperationException($"Producto ID {item.ProductoId} no encontrado.");
+
+                // Para cotizaciones NO validamos stock
+                var lineaSubtotal = item.Cantidad * item.PrecioUnit - item.Descuento;
+                subtotal += lineaSubtotal;
+
+                detalles.Add(new DetalleVenta
+                {
+                    ProductoId = item.ProductoId,
+                    ProductoNombre = producto.Nombre,
+                    Cantidad = item.Cantidad,
+                    PrecioUnit = item.PrecioUnit,
+                    Descuento = item.Descuento,
+                    Subtotal = lineaSubtotal
+                });
+            }
+
+            var baseImponible = subtotal - descuentoGlobal;
+            var impuesto = Math.Round(baseImponible * (impuestoPct / 100), 2);
+            var total = baseImponible + impuesto;
+
+            var venta = new Venta
+            {
+                Numero = _ventaRepo.GetNextNumero(),
+                ClienteId = clienteId,
+                Subtotal = subtotal,
+                Descuento = descuentoGlobal,
+                Impuesto = impuesto,
+                Total = total,
+                MetodoPago = "COTIZACION",
+                MontoRecibido = 0,
+                Cambio = 0,
+                Estado = "COTIZACION",
+                Detalles = detalles
+            };
+
+            // Pasamos descontarStock = false
+            venta.Id = _ventaRepo.Insert(venta, descontarStock: false);
+
+            return venta;
+        }
+    }
+
     public IEnumerable<Venta> GetByFecha(DateTime desde, DateTime hasta) => _ventaRepo.GetByFecha(desde, hasta);
     public Venta? GetById(int id) => _ventaRepo.GetById(id);
     public (decimal Total, int Cantidad) GetResumenDia(DateTime fecha) => _ventaRepo.GetResumenDia(fecha);
@@ -97,6 +170,7 @@ public class ItemCarrito : System.ComponentModel.INotifyPropertyChanged
     private decimal _cantidad;
     private decimal _precioUnit;
     private decimal _descuento;
+    private bool _isSelected;
 
     public int ProductoId { get; set; }
     public string Nombre { get; set; } = string.Empty;
@@ -121,6 +195,18 @@ public class ItemCarrito : System.ComponentModel.INotifyPropertyChanged
         set { _descuento = value; OnCantidadChanged(); }
     }
 
+    public bool IsSelected
+    {
+        get => _isSelected;
+        set
+        {
+            _isSelected = value;
+            PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(IsSelected)));
+        }
+    }
+
+    public bool HasDiscount => Descuento > 0;
+
     public decimal Subtotal => Cantidad * PrecioUnit - Descuento;
 
     public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
@@ -129,5 +215,6 @@ public class ItemCarrito : System.ComponentModel.INotifyPropertyChanged
     {
         PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(Cantidad)));
         PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(Subtotal)));
+        PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(HasDiscount)));
     }
 }

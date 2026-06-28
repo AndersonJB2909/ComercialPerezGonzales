@@ -230,12 +230,12 @@ public class ConfiguracionImpresionViewModel : ViewModelBase
             Set("imp_codigo_barras",    ImprimirCodigoBarras ? "true" : "false");
             Set("imp_logo_ancho",       LogoAnchoCompleto   ? "true" : "false");
 
-            MessageBox.Show("Configuración guardada correctamente.", "Guardado",
+            AppDialog.Show("Configuración guardada correctamente.", "Guardado",
                 MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Error al guardar: {ex.Message}", "Error",
+            AppDialog.Show($"Error al guardar: {ex.Message}", "Error",
                 MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }

@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="ComercialPerezGonzales.Views.Clientes.ClientesView"
+<UserControl x:Class="ComercialPerezGonzales.Views.Clientes.ClientesView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks">
@@ -68,8 +68,22 @@
                       IsReadOnly="True" SelectionMode="Single"
                       Background="#0D1B2A" Foreground="White" BorderThickness="0"
                       GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#1A2740"
-                      AlternatingRowBackground="#0F1E30" RowBackground="#0D1B2A" ColumnHeaderHeight="40"
+                      AlternatingRowBackground="#0F1E30" RowBackground="#0D1B2A" ColumnHeaderHeight="40" RowHeight="50"
                       Visibility="{Binding ModoEdicion, Converter={StaticResource InverseBoolToVisibility}}">
+                <DataGrid.CellStyle>
+                    <Style TargetType="DataGridCell">
+                        <Setter Property="BorderThickness" Value="0"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="DataGridCell">
+                                    <Border Background="{TemplateBinding Background}">
+                                        <ContentPresenter VerticalAlignment="Center" Margin="12,0"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </DataGrid.CellStyle>
                 <DataGrid.ColumnHeaderStyle>
                     <Style TargetType="DataGridColumnHeader">
                         <Setter Property="Background" Value="#152238"/>

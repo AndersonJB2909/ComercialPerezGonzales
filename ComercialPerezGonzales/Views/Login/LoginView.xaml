@@ -1,0 +1,107 @@
+<UserControl x:Class="ComercialPerezGonzales.Views.Login.LoginView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks">
+
+    <Grid Background="#0D1B2A">
+        <!-- Tarjeta Central de Inicio de Sesión / Cambio de Contraseña -->
+        <Border Width="400" VerticalAlignment="Center" HorizontalAlignment="Center"
+                Background="#152238" CornerRadius="12" Padding="32,40"
+                BorderBrush="#1A2740" BorderThickness="1">
+            <Border.Effect>
+                <DropShadowEffect Color="#000000" BlurRadius="20" ShadowDepth="5" Opacity="0.5"/>
+            </Border.Effect>
+            
+            <Grid>
+                <!-- FORMULARIO 1: INICIAR SESIÓN -->
+                <StackPanel Visibility="{Binding IsChangingPassword, Converter={StaticResource InverseBoolToVisibility}}">
+                    <!-- Icono de Tienda -->
+                    <Border Width="70" Height="70" Background="#1E2D4A" CornerRadius="35" HorizontalAlignment="Center" Margin="0,0,0,16">
+                        <iconPacks:PackIconMaterial Kind="Storefront" Width="36" Height="36" Foreground="#22C55E" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+
+                    <!-- Título -->
+                    <TextBlock Text="Comercial Pérez Gonzalez" FontSize="20" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,4"/>
+                    <TextBlock Text="Sistema de Punto de Venta" FontSize="14" Foreground="#888" HorizontalAlignment="Center" Margin="0,0,0,32"/>
+
+                    <!-- Contraseña -->
+                    <TextBlock Text="Contraseña del Sistema" Foreground="#888" FontSize="13" Margin="0,0,0,6"/>
+                    <PasswordBox x:Name="TxtPassword" Background="#0D1B2A" Foreground="White" BorderBrush="#166534" BorderThickness="1.5" Padding="8,10" FontSize="16" Margin="0,0,0,12"/>
+
+                    <!-- Mensaje de Error -->
+                    <TextBlock Text="{Binding ErrorMessage}" Foreground="#EF4444" FontSize="13" TextWrapping="Wrap" Margin="0,0,0,20" Height="36" TextAlignment="Center" FontWeight="SemiBold"/>
+
+                    <!-- Botón de Ingresar -->
+                    <Button Content="INGRESAR" Command="{Binding LoginCommand}" CommandParameter="{Binding ElementName=TxtPassword}"
+                            IsDefault="True" Background="#16A34A" Foreground="White" BorderThickness="0" Padding="14" FontSize="15" FontWeight="Bold" Cursor="Hand">
+                        <Button.Resources>
+                            <Style TargetType="Border">
+                                <Setter Property="CornerRadius" Value="6"/>
+                            </Style>
+                        </Button.Resources>
+                    </Button>
+
+                    <!-- Opción de Cambiar Contraseña -->
+                    <Button Content="Cambiar contraseña de sistema" Command="{Binding ShowChangePasswordCommand}"
+                            Background="Transparent" Foreground="#22C55E" BorderThickness="0" Cursor="Hand" Margin="0,16,0,0" FontSize="13" HorizontalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- FORMULARIO 2: CAMBIAR CONTRASEÑA -->
+                <StackPanel Visibility="{Binding IsChangingPassword, Converter={StaticResource BoolToVisibility}}">
+                    <!-- Icono de Llave -->
+                    <Border Width="60" Height="60" Background="#1E2D4A" CornerRadius="30" HorizontalAlignment="Center" Margin="0,0,0,16">
+                        <iconPacks:PackIconMaterial Kind="KeyChange" Width="28" Height="28" Foreground="#22C55E" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+
+                    <!-- Título -->
+                    <TextBlock Text="Cambiar Contraseña" FontSize="18" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,4"/>
+                    <TextBlock Text="Ingresa los datos solicitados" FontSize="13" Foreground="#888" HorizontalAlignment="Center" Margin="0,0,0,24"/>
+
+                    <!-- Inputs de Cambio de Contraseña -->
+                    <StackPanel x:Name="ChangePasswordPanel">
+                        <!-- Contraseña Anterior -->
+                        <TextBlock Text="Contraseña Anterior" Foreground="#888" FontSize="13" Margin="0,0,0,6"/>
+                        <PasswordBox x:Name="TxtOldPassword" Background="#0D1B2A" Foreground="White" BorderBrush="#166534" BorderThickness="1.5" Padding="8,10" FontSize="16" Margin="0,0,0,12"/>
+
+                        <!-- Nueva Contraseña -->
+                        <TextBlock Text="Nueva Contraseña" Foreground="#888" FontSize="13" Margin="0,0,0,6"/>
+                        <PasswordBox x:Name="TxtNewPassword" Background="#0D1B2A" Foreground="White" BorderBrush="#166534" BorderThickness="1.5" Padding="8,10" FontSize="16" Margin="0,0,0,12"/>
+
+                        <!-- Confirmar Nueva Contraseña -->
+                        <TextBlock Text="Confirmar Nueva Contraseña" Foreground="#888" FontSize="13" Margin="0,0,0,6"/>
+                        <PasswordBox x:Name="TxtConfirmPassword" Background="#0D1B2A" Foreground="White" BorderBrush="#166534" BorderThickness="1.5" Padding="8,10" FontSize="16" Margin="0,0,0,12"/>
+                    </StackPanel>
+
+                    <!-- Mensaje de Estado (Error / Éxito) -->
+                    <TextBlock Text="{Binding ChangePasswordMessage}" Foreground="{Binding ChangePasswordMessageColor}" FontSize="13" TextWrapping="Wrap" Margin="0,0,0,20" Height="36" TextAlignment="Center" FontWeight="SemiBold"/>
+
+                    <!-- Acciones del Formulario -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Button Grid.Column="0" Content="CANCELAR" Command="{Binding CancelChangePasswordCommand}"
+                                Background="#374151" Foreground="White" BorderThickness="0" Padding="12" FontSize="14" FontWeight="Bold" Cursor="Hand" Margin="0,0,6,0">
+                            <Button.Resources>
+                                <Style TargetType="Border">
+                                    <Setter Property="CornerRadius" Value="6"/>
+                                </Style>
+                            </Button.Resources>
+                        </Button>
+
+                        <Button Grid.Column="1" Content="GUARDAR" Command="{Binding ChangePasswordCommand}" CommandParameter="{Binding ElementName=ChangePasswordPanel}"
+                                Background="#16A34A" Foreground="White" BorderThickness="0" Padding="12" FontSize="14" FontWeight="Bold" Cursor="Hand" Margin="6,0,0,0">
+                            <Button.Resources>
+                                <Style TargetType="Border">
+                                    <Setter Property="CornerRadius" Value="6"/>
+                                </Style>
+                            </Button.Resources>
+                        </Button>
+                    </Grid>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

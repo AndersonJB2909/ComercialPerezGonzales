@@ -10,7 +10,7 @@ public class VentaRepository
 
     public VentaRepository(DatabaseContext context) => _context = context;
 
-    public int Insert(Venta venta)
+    public int Insert(Venta venta, bool descontarStock = true)
     {
         using var conn = _context.CreateConnection();
         conn.Open();
@@ -29,9 +29,12 @@ public class VentaRepository
                     INSERT INTO detalle_ventas (venta_id, producto_id, cantidad, precio_unit, descuento, subtotal)
                     VALUES (@VentaId, @ProductoId, @Cantidad, @PrecioUnit, @Descuento, @Subtotal)", d, tx);
 
-                conn.Execute(@"
-                    UPDATE productos SET stock = stock - @Cantidad, updated_at = datetime('now','localtime')
-                    WHERE id = @ProductoId", new { d.Cantidad, d.ProductoId }, tx);
+                if (descontarStock)
+                {
+                    conn.Execute(@"
+                        UPDATE productos SET stock = stock - @Cantidad, updated_at = datetime('now','localtime')
+                        WHERE id = @ProductoId", new { d.Cantidad, d.ProductoId }, tx);
+                }
             }
 
             tx.Commit();
@@ -67,7 +70,7 @@ public class VentaRepository
         return conn.Query<Venta>(@"
             SELECT v.*, c.nombre || ' ' || COALESCE(c.apellido, '') as ClienteNombre
             FROM ventas v LEFT JOIN clientes c ON v.cliente_id = c.id
-            WHERE v.estado = 'COMPLETADA'
+            WHERE v.estado IN ('COMPLETADA', 'COTIZACION')
               AND date(v.created_at) BETWEEN @desde AND @hasta
             ORDER BY v.created_at DESC",
             new { desde = desde.ToString("yyyy-MM-dd"), hasta = hasta.ToString("yyyy-MM-dd") });

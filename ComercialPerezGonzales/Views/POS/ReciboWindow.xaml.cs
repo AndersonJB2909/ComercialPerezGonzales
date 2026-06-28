@@ -51,21 +51,30 @@ public partial class ReciboWindow : MetroWindow
 
         double scale = _vm.ImpFuenteTamano / 100.0;
 
-        for (int i = 0; i < Math.Max(1, _vm.ImpCopias); i++)
+        try
         {
-            var dv = new DrawingVisual();
-            using (var dc = dv.RenderOpen())
+            for (int i = 0; i < Math.Max(1, _vm.ImpCopias); i++)
             {
-                dc.PushTransform(new TranslateTransform(mL, mT));
-                if (scale != 1.0) dc.PushTransform(new ScaleTransform(scale, scale));
-                dc.DrawRectangle(
-                    new VisualBrush(panel) { Stretch = Stretch.None },
-                    null,
-                    new Rect(0, 0, printW, panel.DesiredSize.Height));
-                if (scale != 1.0) dc.Pop();
-                dc.Pop();
+                var dv = new DrawingVisual();
+                using (var dc = dv.RenderOpen())
+                {
+                    dc.PushTransform(new TranslateTransform(mL, mT));
+                    if (scale != 1.0) dc.PushTransform(new ScaleTransform(scale, scale));
+                    dc.DrawRectangle(
+                        new VisualBrush(panel) { Stretch = Stretch.None },
+                        null,
+                        new Rect(0, 0, printW, panel.DesiredSize.Height));
+                    if (scale != 1.0) dc.Pop();
+                    dc.Pop();
+                }
+                dlg.PrintVisual(dv, $"Recibo {_vm.NumeroVenta}");
             }
-            dlg.PrintVisual(dv, $"Recibo {_vm.NumeroVenta}");
+
+            AppDialog.Show("¡La factura ha sido impresa correctamente!", "Impresión exitosa", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            AppDialog.Show($"Ocurrió un error al intentar imprimir: {ex.Message}", "Error de impresión", MessageBoxButton.OK, MessageBoxImage.Error);
         }
 
         panel.InvalidateMeasure();
@@ -86,12 +95,12 @@ public partial class ReciboWindow : MetroWindow
         {
             QuestPDF.Settings.License = LicenseType.Community;
             GenerarPdf(dlg.FileName);
-            MessageBox.Show("PDF guardado correctamente.", "Guardar PDF",
+            AppDialog.Show("PDF guardado correctamente.", "Guardar PDF",
                 MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Error al generar PDF: {ex.Message}", "Error",
+            AppDialog.Show($"Error al generar PDF: {ex.Message}", "Error",
                 MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
@@ -141,7 +150,7 @@ public partial class ReciboWindow : MetroWindow
 
                     col.Item().PaddingVertical(2).LineHorizontal(0.5f);
 
-                    col.Item().Text($"Nº Recibo: {_vm.NumeroVenta}").FontSize(8);
+                    col.Item().Text($"{_vm.TextoTipoDocumento} {_vm.NumeroVenta}").FontSize(8);
                     col.Item().Text($"{_vm.FechaVenta:d/M/yyyy h:mm:ss tt}").FontSize(8);
                     if (!string.IsNullOrWhiteSpace(_vm.NombreUsuario))
                         col.Item().Text($"Usuario: {_vm.NombreUsuario}").FontSize(8);
@@ -158,9 +167,28 @@ public partial class ReciboWindow : MetroWindow
                             row.ConstantItem(55).AlignRight().Text($"{sym}{item.Subtotal:#,##0.00}").FontSize(8);
                         });
                         col.Item().Text($"  {item.Cantidad} {item.UnidadMedida} x {sym}{item.PrecioUnit:#,##0.00}").FontSize(7).FontColor("#888888");
+                        if (item.Descuento > 0)
+                        {
+                            col.Item().Text($"  Desc. -{sym}{item.Descuento:#,##0.00}").FontSize(7).FontColor("#EF4444");
+                        }
                     }
 
                     col.Item().PaddingVertical(2).LineHorizontal(0.5f);
+
+                    if (_vm.HasDiscount)
+                    {
+                        col.Item().Row(row =>
+                        {
+                            row.RelativeItem().Text("Subtotal").FontSize(8);
+                            row.ConstantItem(65).AlignRight().Text($"{sym}{_vm.Subtotal:#,##0.00}").FontSize(8);
+                        });
+                        col.Item().Row(row =>
+                        {
+                            row.RelativeItem().Text("Descuento").FontSize(8);
+                            row.ConstantItem(65).AlignRight().Text($"-{sym}{_vm.Descuento:#,##0.00}").FontSize(8);
+                        });
+                        col.Item().PaddingVertical(1);
+                    }
 
                     // Total
                     col.Item().Row(row =>

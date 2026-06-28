@@ -3,8 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:Controls="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
         xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
-        Title="Procesar Pago"
-        Height="600" Width="860"
+        Title="{Binding TituloVentana}"
+        Height="680" Width="860"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         Background="#0D1B2A">
@@ -34,7 +34,6 @@
             <Setter Property="FontSize" Value="22"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Height" Value="60"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Background" Value="#14532D"/>
@@ -109,21 +108,46 @@
         <!-- Panel derecho: pago -->
         <Grid Grid.Column="1" Background="#0F1E30" Margin="8,16,16,16">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/> <!-- Cliente -->
+                <RowDefinition Height="Auto"/> <!-- Metodo pago label -->
+                <RowDefinition Height="Auto"/> <!-- Botones metodo pago -->
+                <RowDefinition Height="Auto"/> <!-- Display -->
+                <RowDefinition Height="*"/>    <!-- Numpad -->
+                <RowDefinition Height="Auto"/> <!-- Footer -->
             </Grid.RowDefinitions>
 
+            <!-- Selección de Cliente -->
+            <StackPanel Grid.Row="0" Margin="0,0,0,16">
+                <TextBlock Text="Cliente" Foreground="#888" FontSize="14" Margin="0,0,0,4"/>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <ComboBox Grid.Column="0" ItemsSource="{Binding Clientes}" 
+                              SelectedItem="{Binding ClienteSeleccionado}"
+                              DisplayMemberPath="NombreCompleto"
+                              FontSize="15" Height="36" Background="#152238" Foreground="White" BorderBrush="#1A3A2A"/>
+                    <Button Grid.Column="1" Command="{Binding MostrarNuevoClienteCommand}"
+                            Background="#374151" Foreground="White" BorderThickness="0"
+                            Padding="12,0" Margin="8,0,0,0" Cursor="Hand" ToolTip="Crear nuevo cliente">
+                        <iconPacks:PackIconMaterial Kind="Plus" Width="16" Height="16" VerticalAlignment="Center"/>
+                    </Button>
+                </Grid>
+            </StackPanel>
+
             <!-- Método de pago -->
-            <TextBlock Grid.Row="0" Text="Método de Pago" Foreground="#888"
-                       FontSize="14" Margin="0,0,0,8"/>
-            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,16">
+            <TextBlock Grid.Row="1" Text="Método de Pago" Foreground="#888"
+                       FontSize="14" Margin="0,0,0,8"
+                       Visibility="{Binding EsModoVenta, Converter={StaticResource BoolToVisibility}}"/>
+            <UniformGrid Grid.Row="2" Rows="2" Columns="2" Margin="0,0,0,12"
+                         Visibility="{Binding EsModoVenta, Converter={StaticResource BoolToVisibility}}">
+                <!-- EFECTIVO -->
                 <Button Command="{Binding SetMetodoPagoCommand}"
-                        CommandParameter="EFECTIVO" Margin="0,0,8,0">
+                        CommandParameter="EFECTIVO" Margin="0,0,4,4">
                     <Button.Style>
                         <Style TargetType="Button" BasedOn="{StaticResource MetodoBtn}">
+                            <Setter Property="MinWidth" Value="0"/>
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding MetodoPago}" Value="EFECTIVO">
                                     <Setter Property="Background" Value="#16A34A"/>
@@ -138,10 +162,12 @@
                         <TextBlock Text=" Efectivo" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
+                <!-- TARJETA -->
                 <Button Command="{Binding SetMetodoPagoCommand}"
-                        CommandParameter="TARJETA" Margin="0,0,8,0">
+                        CommandParameter="TARJETA" Margin="4,0,0,4">
                     <Button.Style>
                         <Style TargetType="Button" BasedOn="{StaticResource MetodoBtn}">
+                            <Setter Property="MinWidth" Value="0"/>
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding MetodoPago}" Value="TARJETA">
                                     <Setter Property="Background" Value="#16A34A"/>
@@ -156,10 +182,12 @@
                         <TextBlock Text=" Tarjeta" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
+                <!-- TRANSFERENCIA -->
                 <Button Command="{Binding SetMetodoPagoCommand}"
-                        CommandParameter="TRANSFERENCIA">
+                        CommandParameter="TRANSFERENCIA" Margin="0,4,4,0">
                     <Button.Style>
                         <Style TargetType="Button" BasedOn="{StaticResource MetodoBtn}">
+                            <Setter Property="MinWidth" Value="0"/>
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding MetodoPago}" Value="TRANSFERENCIA">
                                     <Setter Property="Background" Value="#16A34A"/>
@@ -171,13 +199,56 @@
                     </Button.Style>
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="BankTransfer" Width="16" Height="16" VerticalAlignment="Center"/>
-                        <TextBlock Text=" Transfer." VerticalAlignment="Center"/>
+                        <TextBlock Text=" Transferencia" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
-            </StackPanel>
+                <!-- NOTA DE CRÉDITO -->
+                <Button Command="{Binding SetMetodoPagoCommand}"
+                        CommandParameter="NOTA_CREDITO" Margin="4,4,0,0">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource MetodoBtn}">
+                            <Setter Property="MinWidth" Value="0"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding MetodoPago}" Value="NOTA_CREDITO">
+                                    <Setter Property="Background" Value="#16A34A"/>
+                                    <Setter Property="Foreground" Value="White"/>
+                                    <Setter Property="BorderBrush" Value="#22C55E"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial Kind="TicketPercent" Width="16" Height="16" VerticalAlignment="Center"/>
+                        <TextBlock Text=" Nota Crédito" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+            </UniformGrid>
+
+            <!-- Entrada y Validacion Nota de Credito -->
+            <Border Grid.Row="3" Background="#152238" CornerRadius="6" Padding="16,12" Margin="0,0,0,12"
+                    Visibility="{Binding EsNotaCredito, Converter={StaticResource BoolToVisibility}}">
+                <StackPanel>
+                    <TextBlock Text="Código Nota de Crédito:" Foreground="#888" FontSize="14" Margin="0,0,0,6"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="80"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox Grid.Column="0" Text="{Binding NotaCreditoCodigo, UpdateSourceTrigger=PropertyChanged}"
+                                 Padding="8,6" FontSize="16" Foreground="White" Background="#0D1B2A" BorderBrush="#1A3A2A"/>
+                        <Button Grid.Column="1" Command="{Binding ValidarNotaCreditoCommand}" Margin="4,0,0,0"
+                                Background="#1E3A8A" Foreground="White" BorderThickness="0" Padding="0,6" Cursor="Hand" Content="Validar"/>
+                    </Grid>
+                    
+                    <TextBlock Text="{Binding NotaCreditoInfo}" Foreground="#4ADE80" FontSize="13" Margin="0,6,0,0"
+                               Visibility="{Binding NotaCreditoInfo, Converter={StaticResource StringToVisibility}}" TextWrapping="Wrap"/>
+                    <TextBlock Text="{Binding NotaCreditoError}" Foreground="#EF4444" FontSize="13" Margin="0,6,0,0"
+                               Visibility="{Binding NotaCreditoError, Converter={StaticResource StringToVisibility}}" TextWrapping="Wrap"/>
+                </StackPanel>
+            </Border>
 
             <!-- Display monto (solo efectivo) -->
-            <Border Grid.Row="2" Background="#0D1B2A" CornerRadius="6" Padding="16,10" Margin="0,0,0,12"
+            <Border Grid.Row="3" Background="#0D1B2A" CornerRadius="6" Padding="16,10" Margin="0,0,0,12"
                     Visibility="{Binding EsEfectivo, Converter={StaticResource BoolToVisibility}}">
                 <StackPanel>
                     <TextBlock Text="Monto recibido:" Foreground="#888" FontSize="14"/>
@@ -188,7 +259,7 @@
             </Border>
 
             <!-- Teclado numérico (solo efectivo) -->
-            <Grid Grid.Row="3" Margin="0,0,0,12"
+            <Grid Grid.Row="4" Margin="0,0,0,12"
                   Visibility="{Binding EsEfectivo, Converter={StaticResource BoolToVisibility}}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*"/>
@@ -202,23 +273,23 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <Button Grid.Row="0" Grid.Column="0" Style="{StaticResource NumBtn}" Command="{Binding NumpadCommand}" CommandParameter="7" Margin="2">7</Button>
-                <Button Grid.Row="0" Grid.Column="1" Style="{StaticResource NumBtn}" Command="{Binding NumpadCommand}" CommandParameter="8" Margin="2">8</Button>
-                <Button Grid.Row="0" Grid.Column="2" Style="{StaticResource NumBtn}" Command="{Binding NumpadCommand}" CommandParameter="9" Margin="2">9</Button>
-                <Button Grid.Row="1" Grid.Column="0" Style="{StaticResource NumBtn}" Command="{Binding NumpadCommand}" CommandParameter="4" Margin="2">4</Button>
-                <Button Grid.Row="1" Grid.Column="1" Style="{StaticResource NumBtn}" Command="{Binding NumpadCommand}" CommandParameter="5" Margin="2">5</Button>
-                <Button Grid.Row="1" Grid.Column="2" Style="{StaticResource NumBtn}" Command="{Binding NumpadCommand}" CommandParameter="6" Margin="2">6</Button>
-                <Button Grid.Row="2" Grid.Column="0" Style="{StaticResource NumBtn}" Command="{Binding NumpadCommand}" CommandParameter="1" Margin="2">1</Button>
-                <Button Grid.Row="2" Grid.Column="1" Style="{StaticResource NumBtn}" Command="{Binding NumpadCommand}" CommandParameter="2" Margin="2">2</Button>
-                <Button Grid.Row="2" Grid.Column="2" Style="{StaticResource NumBtn}" Command="{Binding NumpadCommand}" CommandParameter="3" Margin="2">3</Button>
-                <Button Grid.Row="3" Grid.Column="0" Style="{StaticResource NumBtn}" Command="{Binding NumpadCommand}" CommandParameter="0" Margin="2">0</Button>
-                <Button Grid.Row="3" Grid.Column="1" Style="{StaticResource NumBtn}" Command="{Binding NumpadCommand}" CommandParameter="00" Margin="2">00</Button>
+                <Button Grid.Row="0" Grid.Column="0" Style="{StaticResource NumBtn}" Command="{Binding NumpadCommand}" CommandParameter="7" Margin="2"><TextBlock Text="7" HorizontalAlignment="Center" VerticalAlignment="Center"/></Button>
+                <Button Grid.Row="0" Grid.Column="1" Style="{StaticResource NumBtn}" Command="{Binding NumpadCommand}" CommandParameter="8" Margin="2"><TextBlock Text="8" HorizontalAlignment="Center" VerticalAlignment="Center"/></Button>
+                <Button Grid.Row="0" Grid.Column="2" Style="{StaticResource NumBtn}" Command="{Binding NumpadCommand}" CommandParameter="9" Margin="2"><TextBlock Text="9" HorizontalAlignment="Center" VerticalAlignment="Center"/></Button>
+                <Button Grid.Row="1" Grid.Column="0" Style="{StaticResource NumBtn}" Command="{Binding NumpadCommand}" CommandParameter="4" Margin="2"><TextBlock Text="4" HorizontalAlignment="Center" VerticalAlignment="Center"/></Button>
+                <Button Grid.Row="1" Grid.Column="1" Style="{StaticResource NumBtn}" Command="{Binding NumpadCommand}" CommandParameter="5" Margin="2"><TextBlock Text="5" HorizontalAlignment="Center" VerticalAlignment="Center"/></Button>
+                <Button Grid.Row="1" Grid.Column="2" Style="{StaticResource NumBtn}" Command="{Binding NumpadCommand}" CommandParameter="6" Margin="2"><TextBlock Text="6" HorizontalAlignment="Center" VerticalAlignment="Center"/></Button>
+                <Button Grid.Row="2" Grid.Column="0" Style="{StaticResource NumBtn}" Command="{Binding NumpadCommand}" CommandParameter="1" Margin="2"><TextBlock Text="1" HorizontalAlignment="Center" VerticalAlignment="Center"/></Button>
+                <Button Grid.Row="2" Grid.Column="1" Style="{StaticResource NumBtn}" Command="{Binding NumpadCommand}" CommandParameter="2" Margin="2"><TextBlock Text="2" HorizontalAlignment="Center" VerticalAlignment="Center"/></Button>
+                <Button Grid.Row="2" Grid.Column="2" Style="{StaticResource NumBtn}" Command="{Binding NumpadCommand}" CommandParameter="3" Margin="2"><TextBlock Text="3" HorizontalAlignment="Center" VerticalAlignment="Center"/></Button>
+                <Button Grid.Row="3" Grid.Column="0" Style="{StaticResource NumBtn}" Command="{Binding NumpadCommand}" CommandParameter="0" Margin="2"><TextBlock Text="0" HorizontalAlignment="Center" VerticalAlignment="Center"/></Button>
+                <Button Grid.Row="3" Grid.Column="1" Style="{StaticResource NumBtn}" Command="{Binding NumpadCommand}" CommandParameter="00" Margin="2"><TextBlock Text="00" HorizontalAlignment="Center" VerticalAlignment="Center"/></Button>
                 <Button Grid.Row="3" Grid.Column="2" Style="{StaticResource NumBtn}" Command="{Binding BorrarNumpadCommand}"
-                        Background="#374151" Margin="2">&#x232B;</Button>
+                        Background="#374151" Margin="2"><TextBlock Text="&#x232B;" HorizontalAlignment="Center" VerticalAlignment="Center"/></Button>
             </Grid>
 
             <!-- Totales y botones -->
-            <StackPanel Grid.Row="4">
+            <StackPanel Grid.Row="5">
                 <Button Command="{Binding PagoExactoCommand}"
                         Background="#374151" Foreground="White" BorderThickness="0"
                         Padding="10,8" Cursor="Hand" FontSize="15" Margin="0,0,0,8"
@@ -299,6 +370,79 @@
                     </Button>
                 </Grid>
             </StackPanel>
+        </Grid>
+
+        <!-- Overlay Nuevo Cliente -->
+        <Grid Grid.ColumnSpan="2" Background="#CC0D1B2A"
+              Visibility="{Binding MostrarPanelNuevoCliente, Converter={StaticResource BoolToVisibility}}">
+            <Border Background="#1A2740" CornerRadius="8" Padding="24"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Width="400">
+                <StackPanel MaxWidth="600">
+                    <TextBlock Text="Datos del Cliente" Foreground="#22C55E"
+                               FontSize="20" FontWeight="Bold" Margin="0,0,0,20"/>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="12"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="12"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="12"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0" Grid.Column="0">
+                            <TextBlock Text="Nombre *" Foreground="#888" FontSize="14" Margin="0,0,0,4"/>
+                            <TextBox Text="{Binding NuevoClienteNombre, UpdateSourceTrigger=PropertyChanged}" Background="#0D1B2A" Foreground="White" BorderBrush="#166534" Padding="8,6" FontSize="16"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="0" Grid.Column="2">
+                            <TextBlock Text="Apellido" Foreground="#888" FontSize="14" Margin="0,0,0,4"/>
+                            <TextBox Text="{Binding NuevoClienteApellido, UpdateSourceTrigger=PropertyChanged}" Background="#0D1B2A" Foreground="White" BorderBrush="#166534" Padding="8,6" FontSize="16"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="2" Grid.Column="0">
+                            <TextBlock Text="Documento (RUT/DNI)" Foreground="#888" FontSize="14" Margin="0,0,0,4"/>
+                            <TextBox Text="{Binding NuevoClienteDocumento, UpdateSourceTrigger=PropertyChanged}" Background="#0D1B2A" Foreground="White" BorderBrush="#166534" Padding="8,6" FontSize="16"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="2" Grid.Column="2">
+                            <TextBlock Text="Teléfono" Foreground="#888" FontSize="14" Margin="0,0,0,4"/>
+                            <TextBox Text="{Binding NuevoClienteTelefono, UpdateSourceTrigger=PropertyChanged}" Background="#0D1B2A" Foreground="White" BorderBrush="#166534" Padding="8,6" FontSize="16"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="4" Grid.Column="0">
+                            <TextBlock Text="Email" Foreground="#888" FontSize="14" Margin="0,0,0,4"/>
+                            <TextBox Text="{Binding NuevoClienteEmail, UpdateSourceTrigger=PropertyChanged}" Background="#0D1B2A" Foreground="White" BorderBrush="#166534" Padding="8,6" FontSize="16"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="4" Grid.Column="2">
+                            <TextBlock Text="Código interno" Foreground="#888" FontSize="14" Margin="0,0,0,4"/>
+                            <TextBox Text="{Binding NuevoClienteCodigo, UpdateSourceTrigger=PropertyChanged}" Background="#0D1B2A" Foreground="White" BorderBrush="#166534" Padding="8,6" FontSize="16"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="6" Grid.ColumnSpan="3">
+                            <TextBlock Text="Dirección" Foreground="#888" FontSize="14" Margin="0,0,0,4"/>
+                            <TextBox Text="{Binding NuevoClienteDireccion, UpdateSourceTrigger=PropertyChanged}" Background="#0D1B2A" Foreground="White" BorderBrush="#166534" Padding="8,6" FontSize="16"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,24,0,0">
+                        <Button Command="{Binding CancelarNuevoClienteCommand}"
+                                Background="#374151" Foreground="White" BorderThickness="0" Padding="16,10" Margin="0,0,8,0" Cursor="Hand" FontSize="16">
+                            Cancelar
+                        </Button>
+                        <Button Command="{Binding GuardarNuevoClienteCommand}"
+                                Background="#16A34A" Foreground="White" BorderThickness="0" Padding="16,10" Cursor="Hand" FontSize="16" FontWeight="SemiBold">
+                            <StackPanel Orientation="Horizontal">
+                                <iconPacks:PackIconMaterial Kind="ContentSave" Width="16" Height="16" VerticalAlignment="Center"/>
+                                <TextBlock Text=" Guardar" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
         </Grid>
     </Grid>
 </Controls:MetroWindow>
