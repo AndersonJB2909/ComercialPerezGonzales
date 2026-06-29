@@ -150,11 +150,23 @@
                                         <DataGridTextColumn Header="Producto" Width="*" Binding="{Binding Nombre}" IsReadOnly="True"/>
                                         <DataGridTextColumn Header="Comprado" Width="90" Binding="{Binding CantidadComprada, StringFormat={}{0:N0}}" IsReadOnly="True" ElementStyle="{StaticResource TextRightAlignment}"/>
                                         <DataGridTextColumn Header="Devuelto" Width="80" Binding="{Binding CantidadYaDevuelta, StringFormat={}{0:N0}}" IsReadOnly="True" ElementStyle="{StaticResource TextRightAlignment}"/>
-                                        <DataGridTemplateColumn Header="A Devolver" Width="100">
+                                        <DataGridTemplateColumn Header="A Devolver" Width="80">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <CheckBox IsChecked="{Binding Seleccionado, UpdateSourceTrigger=PropertyChanged}" 
                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                        <DataGridTemplateColumn Header="Cant. Devolver" Width="110">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBox Text="{Binding CantidadADevolver, UpdateSourceTrigger=PropertyChanged, Delay=150, TargetNullValue=0}"
+                                                             IsEnabled="{Binding Seleccionado}"
+                                                             PreviewTextInput="NumericTextBox_PreviewTextInput"
+                                                             PreviewKeyDown="NumericTextBox_PreviewKeyDown"
+                                                             Background="#0D1B2A" Foreground="White" BorderBrush="#1A3A2A"
+                                                             Padding="4,2" HorizontalContentAlignment="Right" FontSize="13"/>
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>

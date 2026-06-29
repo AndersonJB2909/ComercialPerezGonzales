@@ -229,14 +229,45 @@
                     </StackPanel>
                 </Border>
 
-                <Border Background="#152238" CornerRadius="6" Padding="14,8">
+                <Border Background="#152238" CornerRadius="6" Padding="14,8" Margin="0,0,12,0">
                     <StackPanel>
-                        <TextBlock Text="Tarjeta/Transfer." Foreground="#888" FontSize="13" TextAlignment="Center"/>
-                        <TextBlock Foreground="#F59E0B" FontSize="20" FontWeight="Bold" TextAlignment="Center">
+                        <TextBlock Text="Tarjeta" Foreground="#888" FontSize="13" TextAlignment="Center"/>
+                        <TextBlock Foreground="#A78BFA" FontSize="20" FontWeight="Bold" TextAlignment="Center">
                             <TextBlock.Text>
                                 <MultiBinding StringFormat="${0:N2}">
                                     <Binding Path="ResumenCaja.TotalTarjeta"/>
                                 </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="#152238" CornerRadius="6" Padding="14,8" Margin="0,0,12,0">
+                    <StackPanel>
+                        <TextBlock Text="Transferencia" Foreground="#888" FontSize="13" TextAlignment="Center"/>
+                        <TextBlock Foreground="#38BDF8" FontSize="20" FontWeight="Bold" TextAlignment="Center">
+                            <TextBlock.Text>
+                                <MultiBinding StringFormat="${0:N2}">
+                                    <Binding Path="ResumenCaja.TotalTransferencia"/>
+                                </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="#152238" CornerRadius="6" Padding="14,8" Margin="0,0,12,0">
+                    <StackPanel>
+                        <TextBlock Text="Devoluciones" Foreground="#888" FontSize="13" TextAlignment="Center"/>
+                        <TextBlock Text="{Binding ResumenCaja.TotalDevoluciones}" Foreground="White" FontSize="20" FontWeight="Bold" TextAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="#152238" CornerRadius="6" Padding="14,8">
+                    <StackPanel>
+                        <TextBlock Text="Total Devuelto" Foreground="#888" FontSize="13" TextAlignment="Center"/>
+                        <TextBlock Foreground="#EF4444" FontSize="20" FontWeight="Bold" TextAlignment="Center">
+                            <TextBlock.Text>
+                                <MultiBinding StringFormat="-${0:N2}"><Binding Path="ResumenCaja.TotalDevuelto"/></MultiBinding>
                             </TextBlock.Text>
                         </TextBlock>
                     </StackPanel>
@@ -282,6 +313,7 @@
                         <DataGridTextColumn Header="Fecha/Hora" Binding="{Binding CreatedAt, StringFormat=\{0:dd/MM/yyyy hh:mm tt\}}" Width="120"/>
                         <DataGridTextColumn Header="Cliente" Binding="{Binding ClienteNombre}" Width="*"/>
                         <DataGridTextColumn Header="Estado" Binding="{Binding Estado}" Width="90"/>
+                        <DataGridTextColumn Header="Método" Binding="{Binding MetodoPago}" Width="100"/>
                         <DataGridTextColumn Header="Total" Binding="{Binding Total, StringFormat=${0:N2}}" Width="90"/>
                         
                         <DataGridTemplateColumn Header="" Width="160">

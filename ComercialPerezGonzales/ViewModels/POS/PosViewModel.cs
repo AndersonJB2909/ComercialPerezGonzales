@@ -26,12 +26,19 @@ public class PosViewModel : ViewModelBase
     private int _pageSize = 40;
     private int _totalProductos;
     private int _totalPaginas;
+    private bool _isLoading;
 
     public ObservableCollection<ItemCarrito> CartItems { get; } = new();
     public ObservableCollection<Producto> ProductosFiltrados { get; } = new();
     public ObservableCollection<Cliente> ClientesFiltrados { get; } = new();
 
     public bool MostrarClientesSugeridos => ClientesFiltrados.Count > 0;
+
+    public bool IsLoading
+    {
+        get => _isLoading;
+        set => SetProperty(ref _isLoading, value);
+    }
 
     public string SearchText
     {
@@ -156,6 +163,7 @@ public class PosViewModel : ViewModelBase
     public RelayCommand SeleccionarItemCommand { get; }
     public RelayCommand AplicarDescuentoCommand { get; }
     public RelayCommand IrFlujoCajaCommand { get; }
+    public RelayCommand ActualizarProductosCommand { get; }
 
     public PosViewModel(ProductoService productoService, ClienteService clienteService, VentaService ventaService, ConfiguracionRepository configRepo, CierreCajaService cierreService)
     {
@@ -176,11 +184,31 @@ public class PosViewModel : ViewModelBase
         SeleccionarItemCommand = new RelayCommand(param => SeleccionarItem(param as ItemCarrito));
         AplicarDescuentoCommand = new RelayCommand(ExecuteAplicarDescuento);
         IrFlujoCajaCommand = new RelayCommand(() => NavigarFlujoCaja?.Invoke());
+        ActualizarProductosCommand = new RelayCommand(ActualizarProductos);
 
         PaginaAnteriorCommand = new RelayCommand(() => PaginaActual--, () => PaginaActual > 1);
         PaginaSiguienteCommand = new RelayCommand(() => PaginaActual++, () => PaginaActual < TotalPaginas);
         PaginaPrimeraCommand = new RelayCommand(() => PaginaActual = 1, () => PaginaActual > 1);
         PaginaUltimaCommand = new RelayCommand(() => PaginaActual = TotalPaginas, () => PaginaActual < TotalPaginas);
+
+        CartItems.CollectionChanged += (s, e) =>
+        {
+            if (e.OldItems != null)
+            {
+                foreach (ItemCarrito item in e.OldItems)
+                {
+                    item.PropertyChanged -= Item_PropertyChanged;
+                }
+            }
+            if (e.NewItems != null)
+            {
+                foreach (ItemCarrito item in e.NewItems)
+                {
+                    item.PropertyChanged += Item_PropertyChanged;
+                }
+            }
+            RecalcularTotales();
+        };
 
         CargarProductos();
     }
@@ -283,6 +311,14 @@ public class PosViewModel : ViewModelBase
         {
             AppDialog.Show("Debe realizar la apertura de la jornada en la pantalla 'Flujo de Caja' antes de registrar artículos.",
                 "Apertura Obligatoria de Caja",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        if (!producto.TieneStock)
+        {
+            AppDialog.Show($"El producto '{producto.Nombre}' no tiene stock disponible.", 
+                "Producto Sin Stock", 
                 MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
@@ -462,7 +498,11 @@ public class PosViewModel : ViewModelBase
                 pagoVm.MetodoPago,
                 pagoVm.MontoPagado,
                 DescuentoGlobal,
-                pagoVm.NotaCreditoCodigo);
+                pagoVm.NotaCreditoCodigo,
+                pagoVm.PagoEfectivo,
+                pagoVm.PagoTarjeta,
+                pagoVm.PagoTransferencia,
+                pagoVm.ReferenciaTransferencia);
 
             var reciboVm = new ReciboViewModel
             {
@@ -473,6 +513,10 @@ public class PosViewModel : ViewModelBase
                 Descuento     = venta.Descuento + CartItems.Sum(i => i.Descuento),
                 MontoPagado   = pagoVm.MontoPagado,
                 MetodoPago    = pagoVm.MetodoPago,
+                PagoEfectivo  = venta.PagoEfectivo,
+                PagoTarjeta   = venta.PagoTarjeta,
+                PagoTransferencia = venta.PagoTransferencia,
+                ReferenciaTransferencia = venta.ReferenciaTransferencia,
                 NombreCliente = ClienteSeleccionado?.NombreCompleto ?? "Cliente General",
                 OrdenId       = venta.Id,
                 NombreNegocio = _configRepo.GetValor("negocio_nombre")    ?? string.Empty,
@@ -607,5 +651,34 @@ public class PosViewModel : ViewModelBase
         OnPropertyChanged(nameof(Total));
         OnPropertyChanged(nameof(Cambio));
         OnPropertyChanged(nameof(CantidadItems));
+    }
+
+    private void Item_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ItemCarrito.Cantidad) || e.PropertyName == nameof(ItemCarrito.Subtotal))
+        {
+            RecalcularTotales();
+        }
+    }
+
+    private async void ActualizarProductos()
+    {
+        IsLoading = true;
+        try
+        {
+            _searchText = string.Empty;
+            OnPropertyChanged(nameof(SearchText));
+            _paginaActual = 1;
+            OnPropertyChanged(nameof(PaginaActual));
+            
+            // Retardo para retroalimentación visual de carga
+            await System.Threading.Tasks.Task.Delay(800);
+            
+            CargarProductos();
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 }

@@ -17,6 +17,7 @@ public class TableroViewModel : ViewModelBase
     private decimal _totalMes;
     private decimal _totalAnio;
     private PeriodoGrafico _periodo = PeriodoGrafico.Mensual;
+    private bool _isLoading;
 
     public ObservableCollection<VentaMensual> VentasMensuales { get; } = new();
     public ObservableCollection<ResumenProducto> TopProductos { get; } = new();
@@ -84,6 +85,12 @@ public class TableroViewModel : ViewModelBase
         set => SetProperty(ref _totalAnio, value);
     }
 
+    public bool IsLoading
+    {
+        get => _isLoading;
+        set => SetProperty(ref _isLoading, value);
+    }
+
     public RelayCommand AnioAnteriorCommand { get; }
     public RelayCommand AnioSiguienteCommand { get; }
     public RelayCommand ActualizarCommand { get; }
@@ -122,25 +129,36 @@ public class TableroViewModel : ViewModelBase
         OnPropertyChanged(nameof(TituloGrafico));
     }
 
-    public void Actualizar()
+    public async void Actualizar()
     {
-        ActualizarGrafico();
+        IsLoading = true;
+        try
+        {
+            // Retardo para visualización fluida de la animación de carga
+            await System.Threading.Tasks.Task.Delay(800);
 
-        var inicioMes = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
-        TopProductos.Clear();
-        foreach (var p in _service.GetProductosMasVendidos(inicioMes, DateTime.Today))
-            TopProductos.Add(p);
+            ActualizarGrafico();
 
-        TopClientes.Clear();
-        foreach (var c in _service.GetTopClientes(inicioMes, DateTime.Today))
-            TopClientes.Add(c);
+            var inicioMes = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+            TopProductos.Clear();
+            foreach (var p in _service.GetProductosMasVendidos(inicioMes, DateTime.Today))
+                TopProductos.Add(p);
 
-        ResumenHoy = _service.GetResumenCaja(DateTime.Today);
-        TotalMes = _service.GetVentasPorDia(inicioMes, DateTime.Today).Sum(v => v.TotalVentas);
+            TopClientes.Clear();
+            foreach (var c in _service.GetTopClientes(inicioMes, DateTime.Today))
+                TopClientes.Add(c);
 
-        AlertasVencimiento.Clear();
-        int diasThreshold = (DateTime.Today.AddMonths(3) - DateTime.Today).Days;
-        foreach (var p in _productoService.GetProductosPorVencer(diasThreshold))
-            AlertasVencimiento.Add(p);
+            ResumenHoy = _service.GetResumenCaja(DateTime.Today);
+            TotalMes = _service.GetVentasPorDia(inicioMes, DateTime.Today).Sum(v => v.TotalVentas);
+
+            AlertasVencimiento.Clear();
+            int diasThreshold = (DateTime.Today.AddMonths(3) - DateTime.Today).Days;
+            foreach (var p in _productoService.GetProductosPorVencer(diasThreshold))
+                AlertasVencimiento.Add(p);
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 }

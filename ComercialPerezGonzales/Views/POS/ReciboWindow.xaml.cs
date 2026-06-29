@@ -200,6 +200,19 @@ public partial class ReciboWindow : MetroWindow
                     col.Item().PaddingVertical(1);
 
                     col.Item().Text($"Método de pago: {_vm.MetodoPago}").FontSize(8);
+                    if (!string.IsNullOrWhiteSpace(_vm.ReferenciaTransferencia))
+                    {
+                        col.Item().Text($"  - Ref. Transferencia: {_vm.ReferenciaTransferencia}").FontSize(8).FontColor("#444444");
+                    }
+                    if (_vm.EsCombinado)
+                    {
+                        if (_vm.PagoEfectivo > 0)
+                            col.Item().Text($"  - Efectivo: {sym}{_vm.PagoEfectivo:#,##0.00}").FontSize(8).FontColor("#444444");
+                        if (_vm.PagoTarjeta > 0)
+                            col.Item().Text($"  - Tarjeta: {sym}{_vm.PagoTarjeta:#,##0.00}").FontSize(8).FontColor("#444444");
+                        if (_vm.PagoTransferencia > 0)
+                            col.Item().Text($"  - Transferencia: {sym}{_vm.PagoTransferencia:#,##0.00}").FontSize(8).FontColor("#444444");
+                    }
                     if (_vm.MontoPagado > 0)
                     {
                         col.Item().Text($"Monto pagado: {sym}{_vm.MontoPagado:#,##0.00}").FontSize(8);

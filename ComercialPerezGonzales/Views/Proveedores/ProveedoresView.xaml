@@ -41,7 +41,7 @@
                     </StackPanel>
                 </Button>
 
-                <Button Grid.Column="3" Command="{Binding EditarCommand}"
+                <Button Grid.Column="3" Command="{Binding VerDetalleCommand}"
                         Background="#059669" Foreground="White" BorderThickness="0"
                         Padding="12,8" Margin="0,0,8,0" Cursor="Hand" FontSize="15">
                     <StackPanel Orientation="Horizontal">
@@ -69,7 +69,7 @@
                       Background="#0D1B2A" Foreground="White" BorderThickness="0"
                       GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#1A2740"
                       AlternatingRowBackground="#0F1E30" RowBackground="#0D1B2A" ColumnHeaderHeight="40" RowHeight="50"
-                      Visibility="{Binding ModoEdicion, Converter={StaticResource InverseBoolToVisibility}}">
+                      Visibility="{Binding ModoDetalle, Converter={StaticResource InverseBoolToVisibility}}">
                 <DataGrid.CellStyle>
                     <Style TargetType="DataGridCell">
                         <Setter Property="BorderThickness" Value="0"/>
@@ -112,7 +112,7 @@
             </DataGrid>
 
             <!-- Formulario -->
-            <ScrollViewer Visibility="{Binding ModoEdicion, Converter={StaticResource BoolToVisibility}}"
+            <ScrollViewer Visibility="{Binding ModoDetalle, Converter={StaticResource BoolToVisibility}}"
                           VerticalScrollBarVisibility="Auto">
                 <Border Margin="20" Background="#152238" CornerRadius="8" Padding="24">
                     <StackPanel MaxWidth="600" DataContext="{Binding ProveedorEdit}">
@@ -165,11 +165,11 @@
                         </Grid>
 
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,24,0,0">
-                            <Button Command="{Binding DataContext.CancelarCommand, RelativeSource={RelativeSource AncestorType=ScrollViewer}}"
+                            <Button Command="{Binding DataContext.VolverCommand, RelativeSource={RelativeSource AncestorType=ScrollViewer}}"
                                     Background="#374151" Foreground="White" BorderThickness="0" Padding="16,10" Margin="0,0,8,0" Cursor="Hand" FontSize="16">
                                 Cancelar
                             </Button>
-                            <Button Command="{Binding DataContext.GuardarCommand, RelativeSource={RelativeSource AncestorType=ScrollViewer}}"
+                            <Button Command="{Binding DataContext.GuardarProveedorCommand, RelativeSource={RelativeSource AncestorType=ScrollViewer}}"
                                     Background="#16A34A" Foreground="White" BorderThickness="0" Padding="16,10" Cursor="Hand" FontSize="16" FontWeight="SemiBold">
                                 <StackPanel Orientation="Horizontal">
                                     <iconPacks:PackIconMaterial Kind="ContentSave" Width="16" Height="16" VerticalAlignment="Center"/>

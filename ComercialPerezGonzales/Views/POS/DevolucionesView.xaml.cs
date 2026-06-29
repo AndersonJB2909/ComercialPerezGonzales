@@ -12,6 +12,33 @@ public partial class DevolucionesView : UserControl
     public DevolucionesView()
     {
         InitializeComponent();
+        DataContextChanged += DevolucionesView_DataContextChanged;
+    }
+
+    private void DevolucionesView_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        if (e.OldValue is DevolucionesViewModel oldVm)
+        {
+            oldVm.PropertyChanged -= ViewModel_PropertyChanged;
+        }
+        if (e.NewValue is DevolucionesViewModel newVm)
+        {
+            newVm.PropertyChanged += ViewModel_PropertyChanged;
+        }
+    }
+
+    private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(DevolucionesViewModel.SupervisorPin))
+        {
+            if (DataContext is DevolucionesViewModel vm)
+            {
+                if (string.IsNullOrEmpty(vm.SupervisorPin) && SupervisorPinBox.Password != string.Empty)
+                {
+                    SupervisorPinBox.Password = string.Empty;
+                }
+            }
+        }
     }
 
     private void SupervisorPinBox_PasswordChanged(object sender, RoutedEventArgs e)

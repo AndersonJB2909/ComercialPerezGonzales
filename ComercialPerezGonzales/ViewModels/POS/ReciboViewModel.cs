@@ -20,6 +20,11 @@ public class ReciboViewModel
     public decimal  MontoPagado   { get; set; }
     public decimal  Cambio        => MontoPagado - TotalVenta;
     public string   MetodoPago    { get; set; } = "EFECTIVO";
+    public decimal  PagoEfectivo   { get; set; }
+    public decimal  PagoTarjeta    { get; set; }
+    public decimal  PagoTransferencia { get; set; }
+    public string?  ReferenciaTransferencia { get; set; }
+    public bool     EsCombinado    => MetodoPago == "COMBINADO";
     public string   NombreCliente { get; set; } = "Cliente General";
     public int      OrdenId       { get; set; }
     

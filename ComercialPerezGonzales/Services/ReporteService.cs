@@ -13,13 +13,25 @@ public class ReporteService
     {
         using var conn = _context.CreateConnection();
         return conn.Query<ResumenVentaDia>(@"
-            SELECT date(created_at) as Fecha,
-                   COUNT(*) as CantidadVentas,
-                   SUM(total) as TotalVentas
-            FROM ventas
-            WHERE estado = 'COMPLETADA'
-              AND date(created_at) BETWEEN @desde AND @hasta
-            GROUP BY date(created_at)
+            SELECT date(Fecha) as Fecha,
+                   COALESCE(SUM(EsVenta), 0) as CantidadVentas,
+                   COALESCE(SUM(Monto), 0) as TotalVentas
+            FROM (
+                SELECT created_at as Fecha,
+                       1 as EsVenta,
+                       total as Monto
+                FROM ventas
+                WHERE estado = 'COMPLETADA' AND date(created_at) BETWEEN @desde AND @hasta
+                
+                UNION ALL
+                
+                SELECT fecha_hora as Fecha,
+                       0 as EsVenta,
+                       -monto_total as Monto
+                FROM devoluciones
+                WHERE date(fecha_hora) BETWEEN @desde AND @hasta
+            )
+            GROUP BY date(Fecha)
             ORDER BY Fecha DESC",
             new { desde = desde.ToString("yyyy-MM-dd"), hasta = hasta.ToString("yyyy-MM-dd") });
     }
@@ -29,13 +41,26 @@ public class ReporteService
         using var conn = _context.CreateConnection();
         return conn.Query<ResumenProducto>(@"
             SELECT p.nombre as Nombre, p.codigo as Codigo,
-                   SUM(d.cantidad) as CantidadVendida,
-                   SUM(d.subtotal) as TotalVendido
-            FROM detalle_ventas d
-            JOIN productos p ON d.producto_id = p.id
-            JOIN ventas v ON d.venta_id = v.id
-            WHERE v.estado = 'COMPLETADA'
-              AND date(v.created_at) BETWEEN @desde AND @hasta
+                   COALESCE(SUM(Cantidad), 0) as CantidadVendida,
+                   COALESCE(SUM(Subtotal), 0) as TotalVendido
+            FROM (
+                SELECT dv.producto_id,
+                       dv.cantidad as Cantidad,
+                       dv.subtotal as Subtotal
+                FROM detalle_ventas dv
+                JOIN ventas v ON dv.venta_id = v.id
+                WHERE v.estado = 'COMPLETADA' AND date(v.created_at) BETWEEN @desde AND @hasta
+                
+                UNION ALL
+                
+                SELECT dd.producto_id,
+                       -dd.cantidad as Cantidad,
+                       -dd.subtotal as Subtotal
+                FROM detalle_devoluciones dd
+                JOIN devoluciones dev ON dd.devolucion_id = dev.id
+                WHERE date(dev.fecha_hora) BETWEEN @desde AND @hasta
+            ) t
+            JOIN productos p ON t.producto_id = p.id
             GROUP BY p.id
             ORDER BY CantidadVendida DESC
             LIMIT @top",
@@ -46,10 +71,24 @@ public class ReporteService
     {
         using var conn = _context.CreateConnection();
         var datos = conn.Query<(int Mes, decimal Total, int Cantidad)>(@"
-            SELECT CAST(strftime('%m', created_at) AS INTEGER) as Mes,
-                   COALESCE(SUM(total), 0) as Total,
-                   COUNT(*) as Cantidad
-            FROM ventas WHERE estado = 'COMPLETADA' AND strftime('%Y', created_at) = @anio
+            SELECT Mes,
+                   COALESCE(SUM(Monto), 0) as Total,
+                   COALESCE(SUM(EsVenta), 0) as Cantidad
+            FROM (
+                SELECT CAST(strftime('%m', created_at) AS INTEGER) as Mes,
+                       total as Monto,
+                       1 as EsVenta
+                FROM ventas
+                WHERE estado = 'COMPLETADA' AND strftime('%Y', created_at) = @anio
+                
+                UNION ALL
+                
+                SELECT CAST(strftime('%m', fecha_hora) AS INTEGER) as Mes,
+                       -monto_total as Monto,
+                       0 as EsVenta
+                FROM devoluciones
+                WHERE strftime('%Y', fecha_hora) = @anio
+            )
             GROUP BY Mes", new { anio = anio.ToString() })
             .ToDictionary(x => x.Mes);
 
@@ -92,10 +131,24 @@ public class ReporteService
     {
         using var conn = _context.CreateConnection();
         var datos = conn.Query<(int Semana, decimal Total, int Cantidad)>(@"
-            SELECT CAST(strftime('%W', created_at) AS INTEGER) as Semana,
-                   COALESCE(SUM(total), 0) as Total,
-                   COUNT(*) as Cantidad
-            FROM ventas WHERE estado = 'COMPLETADA' AND strftime('%Y', created_at) = @anio
+            SELECT Semana,
+                   COALESCE(SUM(Monto), 0) as Total,
+                   COALESCE(SUM(EsVenta), 0) as Cantidad
+            FROM (
+                SELECT CAST(strftime('%W', created_at) AS INTEGER) as Semana,
+                       total as Monto,
+                       1 as EsVenta
+                FROM ventas
+                WHERE estado = 'COMPLETADA' AND strftime('%Y', created_at) = @anio
+                
+                UNION ALL
+                
+                SELECT CAST(strftime('%W', fecha_hora) AS INTEGER) as Semana,
+                       -monto_total as Monto,
+                       0 as EsVenta
+                FROM devoluciones
+                WHERE strftime('%Y', fecha_hora) = @anio
+            )
             GROUP BY Semana", new { anio = anio.ToString() })
             .ToDictionary(x => x.Semana);
         var lista = Enumerable.Range(1, 52).Select(w => new VentaMensual
@@ -114,11 +167,25 @@ public class ReporteService
         using var conn = _context.CreateConnection();
         int desde = anioBase - 4, hasta = anioBase;
         var datos = conn.Query<(int Anio, decimal Total, int Cantidad)>(@"
-            SELECT CAST(strftime('%Y', created_at) AS INTEGER) as Anio,
-                   COALESCE(SUM(total), 0) as Total,
-                   COUNT(*) as Cantidad
-            FROM ventas WHERE estado = 'COMPLETADA'
-              AND CAST(strftime('%Y', created_at) AS INTEGER) BETWEEN @desde AND @hasta
+            SELECT Anio,
+                   COALESCE(SUM(Monto), 0) as Total,
+                   COALESCE(SUM(EsVenta), 0) as Cantidad
+            FROM (
+                SELECT CAST(strftime('%Y', created_at) AS INTEGER) as Anio,
+                       total as Monto,
+                       1 as EsVenta
+                FROM ventas
+                WHERE estado = 'COMPLETADA'
+                  AND CAST(strftime('%Y', created_at) AS INTEGER) BETWEEN @desde AND @hasta
+                
+                UNION ALL
+                
+                SELECT CAST(strftime('%Y', fecha_hora) AS INTEGER) as Anio,
+                       -monto_total as Monto,
+                       0 as EsVenta
+                FROM devoluciones
+                WHERE CAST(strftime('%Y', fecha_hora) AS INTEGER) BETWEEN @desde AND @hasta
+            )
             GROUP BY Anio", new { desde, hasta })
             .ToDictionary(x => x.Anio);
         var lista = Enumerable.Range(desde, 5).Select(y => new VentaMensual
@@ -144,13 +211,29 @@ public class ReporteService
         using var conn = _context.CreateConnection();
         return conn.Query<ResumenCliente>(@"
             SELECT c.nombre || ' ' || COALESCE(c.apellido,'') as Nombre,
-                   COUNT(v.id) as CantidadVentas,
-                   SUM(v.total) as TotalComprado
-            FROM ventas v JOIN clientes c ON v.cliente_id = c.id
-            WHERE v.estado = 'COMPLETADA'
-              AND date(v.created_at) BETWEEN @desde AND @hasta
-              AND c.nombre != 'Cliente'
-            GROUP BY v.cliente_id ORDER BY TotalComprado DESC LIMIT @top",
+                   COALESCE(SUM(EsVenta), 0) as CantidadVentas,
+                   COALESCE(SUM(Monto), 0) as TotalComprado
+            FROM (
+                SELECT v.cliente_id,
+                       1 as EsVenta,
+                       v.total as Monto
+                FROM ventas v
+                WHERE v.estado = 'COMPLETADA' AND date(v.created_at) BETWEEN @desde AND @hasta
+                
+                UNION ALL
+                
+                SELECT v.cliente_id,
+                       0 as EsVenta,
+                       -dev.monto_total as Monto
+                FROM devoluciones dev
+                JOIN ventas v ON dev.venta_id = v.id
+                WHERE date(dev.fecha_hora) BETWEEN @desde AND @hasta
+            ) t
+            JOIN clientes c ON t.cliente_id = c.id
+            WHERE c.nombre != 'Cliente'
+            GROUP BY t.cliente_id
+            ORDER BY TotalComprado DESC
+            LIMIT @top",
             new { desde = desde.ToString("yyyy-MM-dd"), hasta = hasta.ToString("yyyy-MM-dd"), top });
     }
 
@@ -159,13 +242,36 @@ public class ReporteService
         using var conn = _context.CreateConnection();
         var resumen = conn.QueryFirstOrDefault<ResumenCaja>(@"
             SELECT
-                COUNT(*) as TotalVentas,
-                COALESCE(SUM(total), 0) as TotalIngresos,
-                COALESCE(SUM(CASE WHEN metodo_pago = 'EFECTIVO' THEN total ELSE 0 END), 0) as TotalEfectivo,
-                COALESCE(SUM(CASE WHEN metodo_pago = 'TARJETA' THEN total ELSE 0 END), 0) as TotalTarjeta,
-                COALESCE(SUM(CASE WHEN metodo_pago = 'TRANSFERENCIA' THEN total ELSE 0 END), 0) as TotalTransferencia
-            FROM ventas
-            WHERE estado = 'COMPLETADA' AND date(created_at) = @fecha",
+                COALESCE(SUM(EsVenta), 0) as TotalVentas,
+                COALESCE(SUM(Monto), 0) as TotalIngresos,
+                COALESCE(SUM(PagoEfectivo), 0) as TotalEfectivo,
+                COALESCE(SUM(PagoTarjeta), 0) as TotalTarjeta,
+                COALESCE(SUM(PagoTransferencia), 0) as TotalTransferencia,
+                COALESCE(SUM(EsDevolucion), 0) as TotalDevoluciones,
+                COALESCE(SUM(MontoDevuelto), 0) as TotalDevuelto
+            FROM (
+                SELECT 1 as EsVenta,
+                       total as Monto,
+                       pago_efectivo as PagoEfectivo,
+                       pago_tarjeta as PagoTarjeta,
+                       pago_transferencia as PagoTransferencia,
+                       0 as EsDevolucion,
+                       0 as MontoDevuelto
+                FROM ventas
+                WHERE estado = 'COMPLETADA' AND date(created_at) = @fecha
+                
+                UNION ALL
+                
+                SELECT 0 as EsVenta,
+                       -monto_total as Monto,
+                       CASE WHEN metodo_reembolso = 'EFECTIVO' THEN -monto_total ELSE 0 END as PagoEfectivo,
+                       CASE WHEN metodo_reembolso = 'TARJETA' THEN -monto_total ELSE 0 END as PagoTarjeta,
+                       CASE WHEN metodo_reembolso = 'TRANSFERENCIA' THEN -monto_total ELSE 0 END as PagoTransferencia,
+                       1 as EsDevolucion,
+                       monto_total as MontoDevuelto
+                FROM devoluciones
+                WHERE date(fecha_hora) = @fecha
+            )",
             new { fecha = fecha.ToString("yyyy-MM-dd") });
         return resumen ?? new ResumenCaja();
     }
@@ -210,4 +316,6 @@ public class ResumenCaja
     public decimal TotalEfectivo { get; set; }
     public decimal TotalTarjeta { get; set; }
     public decimal TotalTransferencia { get; set; }
+    public int TotalDevoluciones { get; set; }
+    public decimal TotalDevuelto { get; set; }
 }

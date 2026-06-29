@@ -96,7 +96,21 @@ public class DevolucionesViewModel : ViewModelBase
 
     public bool TieneNotaCreditoGenerada => !string.IsNullOrEmpty(NotaCreditoGenerada);
 
-    public decimal TotalDevolucion => Items.Sum(i => i.SubtotalCalculado);
+    public decimal TotalDevolucion
+    {
+        get
+        {
+            if (VentaEncontrada == null) return 0;
+            
+            decimal subtotalReturned = Items.Sum(i => i.SubtotalCalculado);
+            decimal ratio = VentaEncontrada.Subtotal > 0 ? subtotalReturned / VentaEncontrada.Subtotal : 0;
+            
+            decimal montoDescuento = Math.Round(VentaEncontrada.Descuento * ratio, 2);
+            decimal montoImpuesto = Math.Round(VentaEncontrada.Impuesto * ratio, 2);
+            
+            return subtotalReturned - montoDescuento + montoImpuesto;
+        }
+    }
 
     public ObservableCollection<ItemDevolucionViewModel> Items { get; } = new();
     
@@ -243,6 +257,7 @@ public class DevolucionesViewModel : ViewModelBase
                 CantidadComprada = det.Cantidad,
                 CantidadYaDevuelta = yaDevuelto,
                 PrecioUnit = det.PrecioUnit,
+                DescuentoUnitario = det.Cantidad > 0 ? det.Descuento / det.Cantidad : 0,
                 VolverAStock = true
             };
             Items.Add(itemVm);
@@ -270,6 +285,12 @@ public class DevolucionesViewModel : ViewModelBase
             return;
         }
 
+        if (itemsADevolver.Any(i => i.CantidadADevolver <= 0))
+        {
+            ErrorMensaje = "La cantidad a devolver de los productos seleccionados no puede ser cero.";
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(SupervisorPin))
         {
             ErrorMensaje = "Ingrese el PIN de supervisor para autorizar.";
@@ -279,6 +300,7 @@ public class DevolucionesViewModel : ViewModelBase
         if (!_devService.ValidarPINSupervisor(SupervisorPin))
         {
             ErrorMensaje = "PIN de supervisor incorrecto.";
+            SupervisorPin = string.Empty;
             return;
         }
 
@@ -293,6 +315,17 @@ public class DevolucionesViewModel : ViewModelBase
         if (string.IsNullOrWhiteSpace(motivoFinal))
         {
             ErrorMensaje = "El motivo de la devolución es obligatorio.";
+            return;
+        }
+
+        var confirmResult = ComercialPerezGonzales.AppDialog.Show(
+            "¿Está seguro de que desea procesar esta devolución?",
+            "Confirmar Devolución",
+            System.Windows.MessageBoxButton.YesNo,
+            System.Windows.MessageBoxImage.Question);
+
+        if (confirmResult != System.Windows.MessageBoxResult.Yes)
+        {
             return;
         }
 
@@ -320,6 +353,12 @@ public class DevolucionesViewModel : ViewModelBase
                 NotaCreditoGenerada = dev.NotaCreditoCodigo ?? string.Empty;
             }
 
+            ComercialPerezGonzales.AppDialog.Show(
+                $"El reembolso fue realizado correctamente por un total de {dev.MontoTotal:C2}.", 
+                "Reembolso Realizado", 
+                System.Windows.MessageBoxButton.OK, 
+                System.Windows.MessageBoxImage.Information);
+
             SupervisorPin = string.Empty;
             MotivoOtro = string.Empty;
             
@@ -329,6 +368,7 @@ public class DevolucionesViewModel : ViewModelBase
         catch (Exception ex)
         {
             ErrorMensaje = ex.Message;
+            SupervisorPin = string.Empty;
         }
     }
 
@@ -383,6 +423,7 @@ public class ItemDevolucionViewModel : ViewModelBase
     public decimal CantidadYaDevuelta { get; set; }
     public decimal CantidadDisponible => CantidadComprada - CantidadYaDevuelta;
     public decimal PrecioUnit { get; set; }
+    public decimal DescuentoUnitario { get; set; }
 
     public bool Seleccionado
     {
@@ -401,12 +442,20 @@ public class ItemDevolucionViewModel : ViewModelBase
         get => _cantidadADevolver;
         set
         {
-            if (value < 0) value = 0;
+            decimal minVal = Seleccionado ? 0.01m : 0m;
+            if (value < minVal) value = minVal;
             if (value > CantidadDisponible) value = CantidadDisponible;
 
-            SetProperty(ref _cantidadADevolver, value);
-            OnPropertyChanged(nameof(SubtotalCalculado));
-            _parent.RaiseTotalChanged();
+            if (SetProperty(ref _cantidadADevolver, value))
+            {
+                OnPropertyChanged(nameof(SubtotalCalculado));
+                _parent.RaiseTotalChanged();
+            }
+            else
+            {
+                // Force update UI if the typed value was clamped
+                OnPropertyChanged(nameof(CantidadADevolver));
+            }
         }
     }
 
@@ -416,7 +465,7 @@ public class ItemDevolucionViewModel : ViewModelBase
         set => SetProperty(ref _volverAStock, value);
     }
 
-    public decimal SubtotalCalculado => CantidadADevolver * PrecioUnit;
+    public decimal SubtotalCalculado => CantidadADevolver * (PrecioUnit - DescuentoUnitario);
 
     public ItemDevolucionViewModel(DevolucionesViewModel parent) => _parent = parent;
 }

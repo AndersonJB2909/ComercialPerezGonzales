@@ -18,8 +18,8 @@ public class VentaRepository
         try
         {
             var ventaId = conn.ExecuteScalar<int>(@"
-                INSERT INTO ventas (numero, cliente_id, subtotal, descuento, impuesto, total, metodo_pago, monto_recibido, cambio, estado, notas)
-                VALUES (@Numero, @ClienteId, @Subtotal, @Descuento, @Impuesto, @Total, @MetodoPago, @MontoRecibido, @Cambio, @Estado, @Notas);
+                INSERT INTO ventas (numero, cliente_id, subtotal, descuento, impuesto, total, metodo_pago, monto_recibido, cambio, pago_efectivo, pago_tarjeta, pago_transferencia, referencia_transferencia, estado, notas)
+                VALUES (@Numero, @ClienteId, @Subtotal, @Descuento, @Impuesto, @Total, @MetodoPago, @MontoRecibido, @Cambio, @PagoEfectivo, @PagoTarjeta, @PagoTransferencia, @ReferenciaTransferencia, @Estado, @Notas);
                 SELECT last_insert_rowid();", venta, tx);
 
             foreach (var d in venta.Detalles)

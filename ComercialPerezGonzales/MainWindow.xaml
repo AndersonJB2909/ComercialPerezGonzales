@@ -6,7 +6,8 @@
         Title="Comercial Perez Gonzales - POS"
         Height="720" Width="1280"
         MinHeight="600" MinWidth="1000"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen"
+        PreviewKeyDown="MetroWindow_PreviewKeyDown">
 
     <Controls:MetroWindow.Resources>
         <Style x:Key="NavButton" TargetType="Button">

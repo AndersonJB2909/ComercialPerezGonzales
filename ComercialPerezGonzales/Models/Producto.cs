@@ -63,6 +63,7 @@ public class Producto : INotifyPropertyChanged
         : Stock;
 
     public bool EsDerivado => Conversion != null;
+    public bool TieneStock => StockEfectivo > 0;
 
     public override string ToString() => $"[{Codigo}] {Nombre}";
 }

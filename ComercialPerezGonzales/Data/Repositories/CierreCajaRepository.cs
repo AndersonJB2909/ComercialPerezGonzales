@@ -80,9 +80,9 @@ public class CierreCajaRepository
         using var conn = _context.CreateConnection();
         var v = conn.QueryFirstOrDefault<TotalesDia>(@"
             SELECT
-                COALESCE(SUM(CASE WHEN metodo_pago = 'EFECTIVO'      THEN total ELSE 0 END), 0) AS Efectivo,
-                COALESCE(SUM(CASE WHEN metodo_pago = 'TARJETA'       THEN total ELSE 0 END), 0) AS Tarjetas,
-                COALESCE(SUM(CASE WHEN metodo_pago = 'TRANSFERENCIA' THEN total ELSE 0 END), 0) AS Transferencias,
+                COALESCE(SUM(pago_efectivo),      0) AS Efectivo,
+                COALESCE(SUM(pago_tarjeta),       0) AS Tarjetas,
+                COALESCE(SUM(pago_transferencia), 0) AS Transferencias,
                 COALESCE(SUM(subtotal),  0) AS Bruto,
                 COALESCE(SUM(descuento), 0) AS Descuentos,
                 COALESCE(SUM(impuesto),  0) AS Impuesto,

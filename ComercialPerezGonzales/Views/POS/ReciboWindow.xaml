@@ -132,8 +132,68 @@
                     <Grid Margin="0,0,0,2">
                         <TextBlock Text="{Binding MetodoPago}" FontSize="11" Foreground="Black"/>
                         <TextBlock HorizontalAlignment="Right" FontSize="11" Foreground="Black"
-                                   Text="{Binding TotalVenta, StringFormat=${0:N1}}"/>
+                                   Text="{Binding TotalVenta, StringFormat=${0:N2}}"/>
                     </Grid>
+
+                    <!-- Referencia de Transferencia (si existe) -->
+                    <Grid Margin="12,0,0,2" Visibility="{Binding ReferenciaTransferencia, Converter={StaticResource StringToVisibility}}">
+                        <TextBlock Text="Ref. Transferencia:" FontSize="10" Foreground="Black"/>
+                        <TextBlock HorizontalAlignment="Right" FontSize="10" Foreground="Black"
+                                   Text="{Binding ReferenciaTransferencia}"/>
+                    </Grid>
+
+                    <!-- Desglose de Pago Combinado -->
+                    <StackPanel Visibility="{Binding EsCombinado, Converter={StaticResource BoolToVisibility}}">
+                        <!-- Efectivo -->
+                        <Grid Margin="12,0,0,2">
+                            <Grid.Style>
+                                <Style TargetType="Grid">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding PagoEfectivo}" Value="0">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Grid.Style>
+                            <TextBlock Text="- Efectivo:" FontSize="10" Foreground="Black"/>
+                            <TextBlock HorizontalAlignment="Right" FontSize="10" Foreground="Black"
+                                       Text="{Binding PagoEfectivo, StringFormat=${0:N2}}"/>
+                        </Grid>
+                        <!-- Tarjeta -->
+                        <Grid Margin="12,0,0,2">
+                            <Grid.Style>
+                                <Style TargetType="Grid">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding PagoTarjeta}" Value="0">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Grid.Style>
+                            <TextBlock Text="- Tarjeta:" FontSize="10" Foreground="Black"/>
+                            <TextBlock HorizontalAlignment="Right" FontSize="10" Foreground="Black"
+                                       Text="{Binding PagoTarjeta, StringFormat=${0:N2}}"/>
+                        </Grid>
+                        <!-- Transferencia -->
+                        <Grid Margin="12,0,0,2">
+                            <Grid.Style>
+                                <Style TargetType="Grid">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding PagoTransferencia}" Value="0">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Grid.Style>
+                            <TextBlock Text="- Transferencia:" FontSize="10" Foreground="Black"/>
+                            <TextBlock HorizontalAlignment="Right" FontSize="10" Foreground="Black"
+                                       Text="{Binding PagoTransferencia, StringFormat=${0:N2}}"/>
+                        </Grid>
+                    </StackPanel>
+
                     <Grid Margin="0,0,0,2">
                         <Grid.Style>
                             <Style TargetType="Grid">
@@ -142,12 +202,15 @@
                                     <DataTrigger Binding="{Binding MetodoPago}" Value="EFECTIVO">
                                         <Setter Property="Visibility" Value="Visible"/>
                                     </DataTrigger>
+                                    <DataTrigger Binding="{Binding EsCombinado}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </Grid.Style>
                         <TextBlock Text="Recibido:" FontSize="11" Foreground="Black"/>
                         <TextBlock HorizontalAlignment="Right" FontSize="11" Foreground="Black"
-                                   Text="{Binding MontoPagado, StringFormat=${0:N1}}"/>
+                                   Text="{Binding MontoPagado, StringFormat=${0:N2}}"/>
                     </Grid>
                     <Grid>
                         <Grid.Style>
@@ -157,12 +220,15 @@
                                     <DataTrigger Binding="{Binding MetodoPago}" Value="EFECTIVO">
                                         <Setter Property="Visibility" Value="Visible"/>
                                     </DataTrigger>
+                                    <DataTrigger Binding="{Binding EsCombinado}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </Grid.Style>
                         <TextBlock Text="Cambio:" FontSize="11" Foreground="Black"/>
                         <TextBlock HorizontalAlignment="Right" FontSize="11" Foreground="Black"
-                                   Text="{Binding Cambio, StringFormat=${0:N1}}"/>
+                                   Text="{Binding Cambio, StringFormat=${0:N2}}"/>
                     </Grid>
 
                     <!-- Código de barras -->

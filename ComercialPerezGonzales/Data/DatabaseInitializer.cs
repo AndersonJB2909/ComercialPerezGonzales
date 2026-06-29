@@ -57,6 +57,21 @@ public class DatabaseInitializer
         }
         catch { /* tabla ya existe */ }
 
+        // Migración: corregir índice idx_kardex_ref para incluir producto_id
+        try
+        {
+            using var mIndex = conn.CreateCommand();
+            mIndex.CommandText = "DROP INDEX IF EXISTS idx_kardex_ref;";
+            mIndex.ExecuteNonQuery();
+
+            mIndex.CommandText = @"
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_kardex_ref 
+                ON kardex(referencia_id, referencia_tipo, producto_id) 
+                WHERE referencia_id IS NOT NULL;";
+            mIndex.ExecuteNonQuery();
+        }
+        catch { }
+
         // Migración: Limpieza de duplicados de Cliente General
         try
         {
@@ -214,6 +229,61 @@ public class DatabaseInitializer
             m6.ExecuteNonQuery();
         }
         catch { /* error ignorado */ }
+
+        // Migración: agregar columnas de pago combinado a ventas
+        try
+        {
+            using var m = conn.CreateCommand();
+            m.CommandText = "ALTER TABLE ventas ADD COLUMN pago_efectivo REAL NOT NULL DEFAULT 0;";
+            m.ExecuteNonQuery();
+        }
+        catch { /* columna ya existe */ }
+
+        try
+        {
+            using var m = conn.CreateCommand();
+            m.CommandText = "ALTER TABLE ventas ADD COLUMN pago_tarjeta REAL NOT NULL DEFAULT 0;";
+            m.ExecuteNonQuery();
+        }
+        catch { /* columna ya existe */ }
+
+        try
+        {
+            using var m = conn.CreateCommand();
+            m.CommandText = "ALTER TABLE ventas ADD COLUMN pago_transferencia REAL NOT NULL DEFAULT 0;";
+            m.ExecuteNonQuery();
+        }
+        catch { /* columna ya existe */ }
+
+        try
+        {
+            using var m = conn.CreateCommand();
+            m.CommandText = "ALTER TABLE ventas ADD COLUMN referencia_transferencia TEXT;";
+            m.ExecuteNonQuery();
+        }
+        catch { /* columna ya existe */ }
+
+
+        // Migración: inicializar valores para ventas existentes si todas las nuevas columnas son 0
+        try
+        {
+            using var m = conn.CreateCommand();
+            m.CommandText = @"
+                UPDATE ventas 
+                SET pago_efectivo = total 
+                WHERE metodo_pago = 'EFECTIVO' AND pago_efectivo = 0 AND pago_tarjeta = 0 AND pago_transferencia = 0;
+
+                UPDATE ventas 
+                SET pago_tarjeta = total 
+                WHERE metodo_pago = 'TARJETA' AND pago_efectivo = 0 AND pago_tarjeta = 0 AND pago_transferencia = 0;
+
+                UPDATE ventas 
+                SET pago_transferencia = total 
+                WHERE metodo_pago = 'TRANSFERENCIA' AND pago_efectivo = 0 AND pago_tarjeta = 0 AND pago_transferencia = 0;
+            ";
+            m.ExecuteNonQuery();
+        }
+        catch { /* error ignorado */ }
     }
 
     private static string GetSchema() => @"
@@ -294,6 +364,10 @@ public class DatabaseInitializer
             metodo_pago     TEXT    NOT NULL DEFAULT 'EFECTIVO',
             monto_recibido  REAL    NOT NULL DEFAULT 0,
             cambio          REAL    NOT NULL DEFAULT 0,
+            pago_efectivo   REAL    NOT NULL DEFAULT 0,
+            pago_tarjeta    REAL    NOT NULL DEFAULT 0,
+            pago_transferencia REAL NOT NULL DEFAULT 0,
+            referencia_transferencia TEXT,
             estado          TEXT    NOT NULL DEFAULT 'COMPLETADA',
             notas           TEXT,
             created_at      TEXT    NOT NULL DEFAULT (datetime('now','localtime'))
@@ -373,7 +447,7 @@ public class DatabaseInitializer
         );
 
         CREATE UNIQUE INDEX IF NOT EXISTS idx_kardex_ref
-            ON kardex(referencia_id, referencia_tipo) WHERE referencia_id IS NOT NULL;
+            ON kardex(referencia_id, referencia_tipo, producto_id) WHERE referencia_id IS NOT NULL;
         CREATE INDEX IF NOT EXISTS idx_kardex_producto
             ON kardex(producto_id, fecha_hora);
         CREATE INDEX IF NOT EXISTS idx_movimientos_cierre
@@ -492,5 +566,20 @@ public class DatabaseInitializer
         INSERT OR IGNORE INTO configuracion VALUES ('imp_fuente_tamano',    '100',    'INT',     'IMPRESION', 'Tamaño de fuente en porcentaje (50-150)');
         INSERT OR IGNORE INTO configuracion VALUES ('imp_codigo_barras',    'false',  'BOOL',    'IMPRESION', 'Imprimir código de barras');
         INSERT OR IGNORE INTO configuracion VALUES ('imp_logo_ancho',       'false',  'BOOL',    'IMPRESION', 'Imprimir logo a ancho completo');
+
+        -- Asegurar que todos los productos tengan todas las columnas no nulas
+        UPDATE productos 
+        SET 
+            descripcion = COALESCE(NULLIF(descripcion, ''), 'Descripción de ' || nombre),
+            imagen_path = COALESCE(NULLIF(imagen_path, ''), 'images/' || codigo || '.png'),
+            imagen_data = COALESCE(imagen_data, X'89504E470D0A1A0A0000000D49484452000000010000000108060000001F15C4890000000A49444154789C63000100000500010D0A2DB40000000049454E44AE426082'),
+            fecha_caducidad = COALESCE(NULLIF(fecha_caducidad, ''), date('now', '+1 year')),
+            categoria_id = COALESCE(categoria_id, (SELECT id FROM categorias WHERE nombre = 'General'));
+
+        -- Fechas de caducidad específicas para pruebas
+        UPDATE productos SET fecha_caducidad = date('now', '+15 days') WHERE codigo = '001';
+        UPDATE productos SET fecha_caducidad = date('now', '+1 month') WHERE codigo = '002';
+        UPDATE productos SET fecha_caducidad = date('now', '+2 months') WHERE codigo = '003';
+        UPDATE productos SET fecha_caducidad = date('now', '+3 months') WHERE codigo = '004';
     ";
 }

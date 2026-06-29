@@ -301,8 +301,8 @@ public class ProveedoresViewModel : ViewModelBase
         {
             var id = _proveedorService.Guardar(ProveedorEdit);
             Selected = _proveedorService.GetById(id);
-            CargarDatosProveedor();
             AppDialog.Show("Proveedor guardado correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+            Volver();
         }
         catch (Exception ex)
         {

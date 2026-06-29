@@ -20,7 +20,7 @@ public class VentaService
         _conversionService = conversionService;
     }
 
-    public Venta ProcesarVenta(List<ItemCarrito> carrito, int? clienteId, string metodoPago, decimal montoRecibido, decimal descuentoGlobal = 0, string? notaCreditoCodigo = null)
+    public Venta ProcesarVenta(List<ItemCarrito> carrito, int? clienteId, string metodoPago, decimal montoRecibido, decimal descuentoGlobal = 0, string? notaCreditoCodigo = null, decimal pagoEfectivo = 0, decimal pagoTarjeta = 0, decimal pagoTransferencia = 0, string? referenciaTransferencia = null)
     {
         if (!carrito.Any()) throw new InvalidOperationException("El carrito está vacío.");
 
@@ -77,6 +77,15 @@ public class VentaService
                 throw new InvalidOperationException($"Monto insuficiente. Falta: {total - montoRecibido:F2}");
             }
 
+            // Inicializar desglose si todos son 0 (para compatibilidad de un solo método)
+            if (pagoEfectivo == 0 && pagoTarjeta == 0 && pagoTransferencia == 0)
+            {
+                if (metodoPago == "EFECTIVO") pagoEfectivo = total;
+                else if (metodoPago == "TARJETA") pagoTarjeta = total;
+                else if (metodoPago == "TRANSFERENCIA") pagoTransferencia = total;
+                else if (metodoPago == "NOTA_CREDITO") pagoEfectivo = total; // Tratado como efectivo para reportes
+            }
+
             var venta = new Venta
             {
                 Numero = _ventaRepo.GetNextNumero(),
@@ -88,6 +97,10 @@ public class VentaService
                 MetodoPago = metodoPago,
                 MontoRecibido = montoRecibido,
                 Cambio = Math.Max(0, cambio),
+                PagoEfectivo = pagoEfectivo,
+                PagoTarjeta = pagoTarjeta,
+                PagoTransferencia = pagoTransferencia,
+                ReferenciaTransferencia = referenciaTransferencia,
                 Estado = "COMPLETADA",
                 Detalles = detalles
             };
@@ -180,7 +193,12 @@ public class ItemCarrito : System.ComponentModel.INotifyPropertyChanged
     public decimal Cantidad
     {
         get => _cantidad;
-        set { _cantidad = value; OnCantidadChanged(); }
+        set
+        {
+            if (value <= 0) value = 1;
+            _cantidad = value;
+            OnCantidadChanged();
+        }
     }
 
     public decimal PrecioUnit

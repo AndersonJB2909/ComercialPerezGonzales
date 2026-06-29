@@ -12,6 +12,10 @@ public class Venta
     public string MetodoPago { get; set; } = "EFECTIVO";
     public decimal MontoRecibido { get; set; }
     public decimal Cambio { get; set; }
+    public decimal PagoEfectivo { get; set; }
+    public decimal PagoTarjeta { get; set; }
+    public decimal PagoTransferencia { get; set; }
+    public string? ReferenciaTransferencia { get; set; }
     public string Estado { get; set; } = "COMPLETADA";
     public string? Notas { get; set; }
     public DateTime CreatedAt { get; set; }
