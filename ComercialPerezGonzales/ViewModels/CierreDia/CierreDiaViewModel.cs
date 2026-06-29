@@ -9,6 +9,7 @@ namespace ComercialPerezGonzales.ViewModels.CierreDia;
 public class CierreDiaViewModel : ViewModelBase
 {
     private readonly CierreCajaService _service;
+    private readonly ConfiguracionRepository _configRepo;
 
     // ── Estado ───────────────────────────────────────────────────────────
     private EstadoVistaCierre _estado = EstadoVistaCierre.Cargando;
@@ -125,10 +126,14 @@ public class CierreDiaViewModel : ViewModelBase
     public RelayCommand CalcularResumenCommand { get; }
     public RelayCommand ConfirmarCierreCommand { get; }
     public RelayCommand VolverCommand { get; }
+    public RelayCommand ImprimirCierreCommand { get; }
 
-    public CierreDiaViewModel(CierreCajaService service)
+    public Action<CierreCajaReportViewModel>? SolicitarImpresionCierre { get; set; }
+
+    public CierreDiaViewModel(CierreCajaService service, ConfiguracionRepository configRepo)
     {
         _service = service;
+        _configRepo = configRepo;
 
         CargarCommand          = new RelayCommand(Cargar);
         CrearJornadaCommand    = new RelayCommand(CrearJornada);
@@ -136,6 +141,7 @@ public class CierreDiaViewModel : ViewModelBase
         IniciarCierreCommand   = new RelayCommand(() => Estado = EstadoVistaCierre.Conteo);
         CalcularResumenCommand = new RelayCommand(CalcularResumen);
         ConfirmarCierreCommand = new RelayCommand(ConfirmarCierre);
+        ImprimirCierreCommand  = new RelayCommand(ImprimirCierre);
         VolverCommand          = new RelayCommand(() =>
         {
             ErrorMensaje = string.Empty;
@@ -250,8 +256,16 @@ public class CierreDiaViewModel : ViewModelBase
 
         try
         {
-            Jornada = _service.ProcesarCierre(Jornada, EfectivoFisico, Observaciones);
+            _service.ProcesarCierre(Jornada, EfectivoFisico, Observaciones);
+
+            // ProcesarCierre modifica el objeto en-lugar y devuelve la misma referencia,
+            // por lo que SetProperty no dispararia PropertyChanged. Recargamos desde la BD
+            // para forzar un cambio de referencia y que WPF re-evalúe todos los Jornada.*.
+            _jornada = null;
+            Jornada  = _service.GetJornadaHoy()!;
+
             Resumen = _service.CalcularResumen(Jornada, EfectivoFisico);
+            RefrescarAlertasYTop();
             Estado  = EstadoVistaCierre.Cerrada;
         }
         catch (Exception ex)
@@ -278,6 +292,74 @@ public class CierreDiaViewModel : ViewModelBase
 
         TopProductos.Clear();
         foreach (var t in Resumen.TopProductos) TopProductos.Add(t);
+    }
+
+    private void ImprimirCierre()
+    {
+        ErrorMensaje = string.Empty;
+        if (Jornada == null || !Jornada.EstaCerrado) return;
+
+        try
+        {
+            var resumen = Resumen ?? _service.CalcularResumen(Jornada, Jornada.EfectivoReal ?? 0);
+
+            var reportVm = new CierreCajaReportViewModel
+            {
+                Id = Jornada.Id,
+                FechaJornada = Jornada.FechaJornada,
+                FechaApertura = Jornada.FechaApertura,
+                FechaCierre = Jornada.FechaCierre,
+                UsuarioApertura = Jornada.UsuarioApertura ?? string.Empty,
+                UsuarioCierre = Jornada.UsuarioCierre ?? string.Empty,
+                Estado = Jornada.Estado,
+                
+                FondoInicial = Jornada.FondoInicial,
+                TotalEfectivo = Jornada.TotalEfectivo,
+                TotalTarjetas = Jornada.TotalTarjetas,
+                TotalTransferencias = Jornada.TotalTransferencias,
+                TotalBruto = Jornada.TotalBruto,
+                TotalDescuentos = Jornada.TotalDescuentos,
+                TotalImpuesto = Jornada.TotalImpuesto,
+                TotalNeto = Jornada.TotalNeto,
+                SalidasEfectivo = Jornada.SalidasEfectivo,
+                EntradasExtra = Jornada.EntradasExtra,
+                EfectivoEsperado = Jornada.EfectivoEsperado ?? 0m,
+                EfectivoReal = Jornada.EfectivoReal ?? 0m,
+                Diferencia = Jornada.Diferencia ?? 0m,
+                EstadoConciliacion = Jornada.EstadoConciliacion,
+                CantidadVentas = Jornada.CantidadVentas,
+                Observaciones = Jornada.Observaciones ?? string.Empty,
+
+                Movimientos = resumen.Movimientos,
+                AlertasStock = resumen.AlertasStock,
+                TopProductos = resumen.TopProductos,
+
+                // Datos de la empresa
+                NombreNegocio = _configRepo.GetValor("negocio_nombre") ?? string.Empty,
+                Direccion = _configRepo.GetValor("negocio_direccion") ?? string.Empty,
+                Telefono = _configRepo.GetValor("negocio_telefono") ?? string.Empty,
+                Rnc = _configRepo.GetValor("negocio_rut") ?? string.Empty,
+                NombreUsuario = _configRepo.GetValor("usuario_nombre") ?? string.Empty,
+                MonedaSimbolo = _configRepo.GetValor("moneda_simbolo") ?? "$",
+
+                // Config de impresión
+                ImpNombreImpresora = _configRepo.GetValor("imp_impresora") ?? string.Empty,
+                ImpTipoPapel = _configRepo.GetValor("imp_papel") ?? "80mm",
+                ImpCopias = int.TryParse(_configRepo.GetValor("imp_copias"), out var cp) ? cp : 1,
+                ImpMargenArriba = int.TryParse(_configRepo.GetValor("imp_margen_arriba"), out var ma) ? ma : 0,
+                ImpMargenAbajo = int.TryParse(_configRepo.GetValor("imp_margen_abajo"), out var mb) ? mb : 0,
+                ImpMargenIzquierda = int.TryParse(_configRepo.GetValor("imp_margen_izquierda"), out var mi) ? mi : 0,
+                ImpMargenDerecha = int.TryParse(_configRepo.GetValor("imp_margen_derecha"), out var mr) ? mr : 0,
+                ImpFuenteFamilia = _configRepo.GetValor("imp_fuente_familia") ?? string.Empty,
+                ImpFuenteTamano = int.TryParse(_configRepo.GetValor("imp_fuente_tamano"), out var ft) ? ft : 100
+            };
+
+            SolicitarImpresionCierre?.Invoke(reportVm);
+        }
+        catch (Exception ex)
+        {
+            ErrorMensaje = $"Error al preparar la impresión: {ex.Message}";
+        }
     }
 }
 

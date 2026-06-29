@@ -74,17 +74,24 @@ public class LoginViewModel : ViewModelBase
         if (parameter is PasswordBox passwordBox)
         {
             string password = passwordBox.Password;
-            string? storedHash = _configRepo.GetValor("pos_password");
+            string? correctPassword = _configRepo.GetValor("pos_password");
 
-            if (string.IsNullOrEmpty(storedHash))
-                storedHash = SecurityHelper.HashPassword("admin123");
-
-            bool correcto = SecurityHelper.IsHashed(storedHash)
-                ? SecurityHelper.HashPassword(password) == storedHash
-                : password == storedHash; // fallback por si la migración aún no corrió
-
-            if (correcto)
+            if (string.IsNullOrEmpty(correctPassword))
             {
+                correctPassword = "admin123";
+            }
+
+            bool isValid = SecurityHelper.IsHashed(correctPassword)
+                ? SecurityHelper.HashPassword(password) == correctPassword
+                : password == correctPassword;
+
+            if (isValid)
+            {
+                // Si la contraseña guardada estaba en texto plano, la migramos de forma automática al iniciar sesión
+                if (!SecurityHelper.IsHashed(correctPassword))
+                {
+                    _configRepo.SetValor("pos_password", SecurityHelper.HashPassword(correctPassword));
+                }
                 ErrorMessage = string.Empty;
                 passwordBox.Clear();
                 _onLoginSuccess.Invoke();
@@ -120,15 +127,17 @@ public class LoginViewModel : ViewModelBase
                 string newPass = newPb.Password;
                 string confirmPass = confirmPb.Password;
 
-                string? storedHash = _configRepo.GetValor("pos_password");
-                if (string.IsNullOrEmpty(storedHash))
-                    storedHash = SecurityHelper.HashPassword("admin123");
+                string? correctPassword = _configRepo.GetValor("pos_password");
+                if (string.IsNullOrEmpty(correctPassword))
+                {
+                    correctPassword = "admin123";
+                }
 
-                bool oldCorrecto = SecurityHelper.IsHashed(storedHash)
-                    ? SecurityHelper.HashPassword(oldPass) == storedHash
-                    : oldPass == storedHash;
+                bool isOldValid = SecurityHelper.IsHashed(correctPassword)
+                    ? SecurityHelper.HashPassword(oldPass) == correctPassword
+                    : oldPass == correctPassword;
 
-                if (!oldCorrecto)
+                if (!isOldValid)
                 {
                     ChangePasswordMessage = "La contraseña anterior es incorrecta.";
                     ChangePasswordMessageColor = "#EF4444";
@@ -149,7 +158,7 @@ public class LoginViewModel : ViewModelBase
                     return;
                 }
 
-                // Guardar la nueva contraseña como hash
+                // Guardar la nueva contraseña encriptada con SHA-256
                 _configRepo.SetValor("pos_password", SecurityHelper.HashPassword(newPass));
 
                 ChangePasswordMessage = "¡Contraseña actualizada con éxito!";

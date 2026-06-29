@@ -1,6 +1,7 @@
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Text.RegularExpressions;
+using ComercialPerezGonzales.ViewModels.CierreDia;
 
 namespace ComercialPerezGonzales.Views.CierreDia;
 
@@ -9,6 +10,24 @@ public partial class CierreDiaView : UserControl
     public CierreDiaView()
     {
         InitializeComponent();
+        DataContextChanged += (s, e) =>
+        {
+            if (e.OldValue is CierreDiaViewModel oldVm)
+            {
+                oldVm.SolicitarImpresionCierre -= Vm_SolicitarImpresionCierre;
+            }
+            if (e.NewValue is CierreDiaViewModel newVm)
+            {
+                newVm.SolicitarImpresionCierre -= Vm_SolicitarImpresionCierre;
+                newVm.SolicitarImpresionCierre += Vm_SolicitarImpresionCierre;
+            }
+        };
+    }
+
+    private void Vm_SolicitarImpresionCierre(ComercialPerezGonzales.ViewModels.CierreDia.CierreCajaReportViewModel reportVm)
+    {
+        var window = new CierreCajaReportWindow(reportVm) { Owner = System.Windows.Window.GetWindow(this) };
+        window.ShowDialog();
     }
 
     private void NumericTextBox_PreviewTextInput(object sender, TextCompositionEventArgs e)

@@ -585,10 +585,8 @@
                                     <TextBlock Text="✓ Jornada Cerrada" Foreground="#4ADE80"
                                                FontSize="18" FontWeight="Bold" Margin="0,0,0,4"/>
                                     <TextBlock Foreground="#6EC99E" FontSize="13">
-                                        <Run Text="Cerrada a las"/>
-                                        <Run Text="{Binding Jornada.FechaCierre, StringFormat=hh:mm tt, Mode=OneWay}"/>
-                                        <Run Text="por"/>
-                                        <Run Text="{Binding Jornada.UsuarioCierre, Mode=OneWay}"/>
+                                        <Run Text="Caja cerrada —"/>
+                                        <Run Text="{Binding Jornada.FechaCierre, StringFormat='hh:mm tt', Mode=OneWay}"/>
                                     </TextBlock>
                                 </StackPanel>
                             </Border>
@@ -716,6 +714,18 @@
                             <TextBlock Text="{Binding Jornada.Observaciones}"
                                        Foreground="#888" FontSize="12" TextWrapping="Wrap"
                                        Visibility="{Binding Jornada.Observaciones, Converter={StaticResource StringToVisibility}}"/>
+
+                            <!-- Botón Imprimir Reporte de Cierre -->
+                            <Button Command="{Binding ImprimirCierreCommand}"
+                                    Background="#2563EB" Foreground="White"
+                                    BorderThickness="0" Padding="0,12" Margin="0,20,0,0" Cursor="Hand" FontSize="14"
+                                    HorizontalAlignment="Stretch">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <iconPacks:PackIconMaterial Kind="Printer" Width="14" Height="14"
+                                                                VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                    <TextBlock Text="Imprimir Reporte de Cierre" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                </StackPanel>
+                            </Button>
                         </StackPanel>
 
                     </StackPanel>

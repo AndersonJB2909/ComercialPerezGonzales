@@ -141,11 +141,8 @@ public class OrdenCompraRepository
     public string GetNextNumero()
     {
         using var conn = _context.CreateConnection();
-        var ultimo = conn.ExecuteScalar<string>("SELECT numero FROM ordenes_compra ORDER BY id DESC LIMIT 1");
-        if (ultimo == null) return "OC-000001";
-        var partes = ultimo.Split('-');
-        if (partes.Length == 2 && int.TryParse(partes[1], out int num))
-            return $"OC-{(num + 1):D6}";
-        return "OC-000001";
+        // DESIGN-006: Usar el ID máximo secuencial para generar el número de orden de compra
+        var maxId = conn.ExecuteScalar<int>("SELECT COALESCE(MAX(id), 0) FROM ordenes_compra");
+        return $"OC-{(maxId + 1):D6}";
     }
 }
