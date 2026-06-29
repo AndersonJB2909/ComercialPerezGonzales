@@ -27,5 +27,8 @@
     <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
     <PackageReference Include="ZXing.Net" Version="0.16.9" />
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="cpg_logo.ico" />
+  </ItemGroup>
 
 </Project>
