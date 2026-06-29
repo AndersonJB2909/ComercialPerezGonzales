@@ -193,6 +193,7 @@
             <converters:ByteArrayToImageConverter x:Key="BytesToImage" />
             <converters:ByteArrayToVisibilityConverter x:Key="BytesToVisibility" />
             <converters:ByteArrayToInverseVisibilityConverter x:Key="BytesToInverseVisibility" />
+            <converters:NullToCollapsedConverter x:Key="NullToCollapsed" />
 
             <DataTemplate DataType="{x:Type vml:LoginViewModel}">
                 <viewsl:LoginView />

@@ -402,7 +402,12 @@ public class ProveedoresViewModel : ViewModelBase
     private void RecibirMercancia()
     {
         if (_ordenParaRecibir == null || string.IsNullOrWhiteSpace(_numeroFacturaRecepcion)) return;
-        // sync editable CantidadRecibida from DetallesOrdenRecibir back to the orden
+        if (!DetallesOrdenRecibir.Any(d => d.CantidadRecibida > 0))
+        {
+            AppDialog.Show("Ingrese la cantidad recibida para al menos un producto.", "Aviso", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+        // sync editable CantidadRecibida from DetallesOrdenRecibir back to la orden
         foreach (var d in DetallesOrdenRecibir)
         {
             var orig = _ordenParaRecibir.Detalles.FirstOrDefault(x => x.Id == d.Id);
