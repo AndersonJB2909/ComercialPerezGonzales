@@ -10,14 +10,17 @@ public class VentaService
     private readonly ProductoRepository _productoRepo;
     private readonly ConfiguracionRepository _configRepo;
     private readonly ProductoConversionService _conversionService;
+    private readonly DevolucionService _devolucionService;
 
     public VentaService(VentaRepository ventaRepo, ProductoRepository productoRepo,
-        ConfiguracionRepository configRepo, ProductoConversionService conversionService)
+        ConfiguracionRepository configRepo, ProductoConversionService conversionService,
+        DevolucionService devolucionService)
     {
         _ventaRepo = ventaRepo;
         _productoRepo = productoRepo;
         _configRepo = configRepo;
         _conversionService = conversionService;
+        _devolucionService = devolucionService;
     }
 
     public Venta ProcesarVenta(List<ItemCarrito> carrito, int? clienteId, string metodoPago, decimal montoRecibido, decimal descuentoGlobal = 0, string? notaCreditoCodigo = null, decimal pagoEfectivo = 0, decimal pagoTarjeta = 0, decimal pagoTransferencia = 0, string? referenciaTransferencia = null)
@@ -63,12 +66,11 @@ public class VentaService
                 if (string.IsNullOrWhiteSpace(notaCreditoCodigo))
                     throw new InvalidOperationException("Código de Nota de Crédito no proporcionado.");
 
-                var devService = (ComercialPerezGonzales.Services.DevolucionService)App.Services.GetService(typeof(ComercialPerezGonzales.Services.DevolucionService))!;
-                var nc = devService.ValidarNotaCredito(notaCreditoCodigo.Trim().ToUpper(), total);
+                var nc = _devolucionService.ValidarNotaCredito(notaCreditoCodigo.Trim().ToUpper(), total);
                 if (nc == null)
                     throw new InvalidOperationException("Nota de Crédito no válida.");
 
-                devService.ConsumirNotaCredito(notaCreditoCodigo.Trim().ToUpper(), total);
+                _devolucionService.ConsumirNotaCredito(notaCreditoCodigo.Trim().ToUpper(), total);
                 montoRecibido = total;
                 cambio = 0;
             }
@@ -105,7 +107,9 @@ public class VentaService
                 Detalles = detalles
             };
 
-            venta.Id = _ventaRepo.Insert(venta);
+            // descontarStock: false — el stock lo maneja exclusivamente DescontarStock,
+            // que sabe si el producto es derivado (descuenta del base) o directo.
+            venta.Id = _ventaRepo.Insert(venta, descontarStock: false);
 
             // Descontar stock dentro del lock (derivados descuentan del base)
             foreach (var item in carrito)

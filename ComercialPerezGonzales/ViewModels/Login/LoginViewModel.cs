@@ -74,14 +74,16 @@ public class LoginViewModel : ViewModelBase
         if (parameter is PasswordBox passwordBox)
         {
             string password = passwordBox.Password;
-            string? correctPassword = _configRepo.GetValor("pos_password");
+            string? storedHash = _configRepo.GetValor("pos_password");
 
-            if (string.IsNullOrEmpty(correctPassword))
-            {
-                correctPassword = "admin123";
-            }
+            if (string.IsNullOrEmpty(storedHash))
+                storedHash = SecurityHelper.HashPassword("admin123");
 
-            if (password == correctPassword)
+            bool correcto = SecurityHelper.IsHashed(storedHash)
+                ? SecurityHelper.HashPassword(password) == storedHash
+                : password == storedHash; // fallback por si la migración aún no corrió
+
+            if (correcto)
             {
                 ErrorMessage = string.Empty;
                 passwordBox.Clear();
@@ -118,13 +120,15 @@ public class LoginViewModel : ViewModelBase
                 string newPass = newPb.Password;
                 string confirmPass = confirmPb.Password;
 
-                string? correctPassword = _configRepo.GetValor("pos_password");
-                if (string.IsNullOrEmpty(correctPassword))
-                {
-                    correctPassword = "admin123";
-                }
+                string? storedHash = _configRepo.GetValor("pos_password");
+                if (string.IsNullOrEmpty(storedHash))
+                    storedHash = SecurityHelper.HashPassword("admin123");
 
-                if (oldPass != correctPassword)
+                bool oldCorrecto = SecurityHelper.IsHashed(storedHash)
+                    ? SecurityHelper.HashPassword(oldPass) == storedHash
+                    : oldPass == storedHash;
+
+                if (!oldCorrecto)
                 {
                     ChangePasswordMessage = "La contraseña anterior es incorrecta.";
                     ChangePasswordMessageColor = "#EF4444";
@@ -145,8 +149,8 @@ public class LoginViewModel : ViewModelBase
                     return;
                 }
 
-                // Guardar la nueva contraseña
-                _configRepo.SetValor("pos_password", newPass);
+                // Guardar la nueva contraseña como hash
+                _configRepo.SetValor("pos_password", SecurityHelper.HashPassword(newPass));
 
                 ChangePasswordMessage = "¡Contraseña actualizada con éxito!";
                 ChangePasswordMessageColor = "#22C55E";

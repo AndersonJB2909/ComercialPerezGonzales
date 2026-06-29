@@ -156,27 +156,45 @@ public class CierreCajaRepository
         using var tx = conn.BeginTransaction();
         try
         {
-            // ponytail: stock_resultante usa el stock actual del producto, no el stock por movimiento;
-            // el stock ya fue decrementado por VentaRepository.Insert al momento de venta.
+            // stock_resultante se reconstruye históricamente:
+            // stock_actual + total_vendido_hoy - acumulado_hasta_este_movimiento
             conn.Execute(@"
+                WITH day_sales AS (
+                    SELECT
+                        dv.producto_id,
+                        v.id          AS venta_id,
+                        v.created_at,
+                        v.numero,
+                        dv.cantidad,
+                        dv.precio_unit,
+                        p.stock       AS stock_actual,
+                        SUM(dv.cantidad) OVER (PARTITION BY dv.producto_id)
+                            AS total_vendido_hoy,
+                        SUM(dv.cantidad) OVER (
+                            PARTITION BY dv.producto_id
+                            ORDER BY v.created_at
+                            ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+                        ) AS acumulado
+                    FROM detalle_ventas dv
+                    JOIN ventas    v ON v.id  = dv.venta_id
+                    JOIN productos p ON p.id  = dv.producto_id
+                    WHERE v.estado = 'COMPLETADA'
+                      AND date(v.created_at) = @fechaJornada
+                )
                 INSERT OR IGNORE INTO kardex
                     (producto_id, fecha_hora, tipo_movimiento, cantidad,
                      costo_unitario, stock_resultante, referencia_id, referencia_tipo, notas)
                 SELECT
-                    dv.producto_id,
-                    v.created_at,
+                    producto_id,
+                    created_at,
                     'SALIDA_VENTA',
-                    dv.cantidad,
-                    dv.precio_unit,
-                    p.stock,
-                    v.id,
+                    cantidad,
+                    precio_unit,
+                    stock_actual + total_vendido_hoy - acumulado AS stock_resultante,
+                    venta_id,
                     'VENTA',
-                    'Cierre: ' || v.numero
-                FROM detalle_ventas dv
-                JOIN ventas    v ON v.id  = dv.venta_id
-                JOIN productos p ON p.id  = dv.producto_id
-                WHERE v.estado = 'COMPLETADA'
-                  AND date(v.created_at) = @fechaJornada",
+                    'Cierre: ' || numero
+                FROM day_sales",
                 new { fechaJornada }, tx);
 
             tx.Commit();

@@ -190,9 +190,9 @@ public class DevolucionesViewModel : ViewModelBase
             }
 
             var id = conn.ExecuteScalar<int?>(@"
-                SELECT id FROM ventas 
-                WHERE numero = @searchStr 
-                   OR (id = @searchId AND @searchId IS NOT NULL)", 
+                SELECT id FROM ventas
+                WHERE UPPER(numero) = @searchStr
+                   OR (id = @searchId AND @searchId IS NOT NULL)",
                 new { searchStr, searchId });
 
             if (id.HasValue)

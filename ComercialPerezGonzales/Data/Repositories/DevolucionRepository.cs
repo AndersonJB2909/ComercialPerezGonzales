@@ -36,24 +36,22 @@ public class DevolucionRepository
                     conn.Execute(@"
                         UPDATE productos SET stock = stock + @Cantidad, updated_at = datetime('now','localtime')
                         WHERE id = @ProductoId", new { d.Cantidad, d.ProductoId }, tx);
+
+                    // Registrar en kardex solo cuando el stock físico cambia realmente
+                    var currentStock = conn.ExecuteScalar<double>("SELECT stock FROM productos WHERE id = @ProductoId", new { d.ProductoId }, tx);
+                    conn.Execute(@"
+                        INSERT INTO kardex (producto_id, tipo_movimiento, cantidad, costo_unitario, stock_resultante, referencia_id, referencia_tipo, notas)
+                        VALUES (@ProductoId, 'DEVOLUCION', @Cantidad, @PrecioUnit, @currentStock, @DevolucionId, 'DEVOLUCION', @Notas)",
+                        new {
+                            d.ProductoId,
+                            d.Cantidad,
+                            d.PrecioUnit,
+                            currentStock,
+                            DevolucionId = devId,
+                            Notas = "Devolución de venta. Estado: STOCK"
+                        }, tx);
                 }
-                
-                // Always log stock movement in kardex
-                // tipo_movimiento: 'DEVOLUCION' or we can choose depending on condition. The schema has:
-                // CHECK(tipo_movimiento IN ('ENTRADA_COMPRA','SALIDA_VENTA','AJUSTE_POS','AJUSTE_NEG','DEVOLUCION'))
-                // For stock return, it is a DEVOLUCION (adding to stock). For merma, it could also be logged or separate. Let's log it.
-                var currentStock = conn.ExecuteScalar<double>("SELECT stock FROM productos WHERE id = @ProductoId", new { d.ProductoId }, tx);
-                conn.Execute(@"
-                    INSERT INTO kardex (producto_id, tipo_movimiento, cantidad, costo_unitario, stock_resultante, referencia_id, referencia_tipo, notas)
-                    VALUES (@ProductoId, 'DEVOLUCION', @Cantidad, @PrecioUnit, @currentStock, @DevolucionId, 'DEVOLUCION', @Notas)",
-                    new { 
-                        d.ProductoId, 
-                        d.Cantidad, 
-                        d.PrecioUnit, 
-                        currentStock, 
-                        DevolucionId = devId, 
-                        Notas = $"Devolución de venta. Estado: {d.EstadoProducto}" 
-                    }, tx);
+                // MERMA: el stock no cambia, no se registra movimiento en kardex
             }
 
             tx.Commit();
@@ -170,11 +168,7 @@ public class DevolucionRepository
     public string GetNextNotaCreditoCodigo()
     {
         using var conn = _context.CreateConnection();
-        var ultimo = conn.ExecuteScalar<string>("SELECT codigo FROM notas_credito ORDER BY id DESC LIMIT 1");
-        if (ultimo == null) return "NC-000001";
-        var partes = ultimo.Split('-');
-        if (partes.Length == 2 && int.TryParse(partes[1], out int num))
-            return $"NC-{(num + 1):D6}";
-        return "NC-000001";
+        var maxId = conn.ExecuteScalar<int>("SELECT COALESCE(MAX(id), 0) FROM notas_credito");
+        return $"NC-{(maxId + 1):D6}";
     }
 }

@@ -425,7 +425,8 @@ public class PagoViewModel : ViewModelBase
                 if (PagoEfectivo > 0) count++;
                 if (PagoTarjeta > 0) count++;
                 if (PagoTransferencia > 0) count++;
-                return MontoPagado >= TotalVenta && count >= 2;
+                // Monto exacto: en pago combinado no hay mecanismo de cambio
+                return Math.Abs(MontoPagado - TotalVenta) <= 0.01m && count >= 2;
             }
             return MontoPagado >= TotalVenta;
         }
@@ -543,16 +544,10 @@ public class PagoViewModel : ViewModelBase
             var nc = service.ValidarNotaCredito(NotaCreditoCodigo.Trim().ToUpper(), TotalVenta);
             if (nc != null)
             {
-                if (nc.MontoDisponible < TotalVenta)
-                {
-                    NotaCreditoError = $"El saldo de la nota de crédito ({nc.MontoDisponible:C2}) es menor que el total de la venta ({TotalVenta:C2}).";
-                }
-                else
-                {
-                    _notaCreditoValida = true;
-                    MontoPagado = TotalVenta;
-                    NotaCreditoInfo = $"✓ Nota de Crédito Válida. Saldo disponible: {nc.MontoDisponible:C2}. Se cobrará: {TotalVenta:C2}. Nuevo saldo: {(nc.MontoDisponible - TotalVenta):C2}.";
-                }
+                // ValidarNotaCredito ya lanzó excepción si saldo < total — aquí nc siempre tiene saldo suficiente
+                _notaCreditoValida = true;
+                MontoPagado = TotalVenta;
+                NotaCreditoInfo = $"✓ Nota de Crédito Válida. Saldo disponible: {nc.MontoDisponible:C2}. Se cobrará: {TotalVenta:C2}. Nuevo saldo: {(nc.MontoDisponible - TotalVenta):C2}.";
             }
         }
         catch (Exception ex)

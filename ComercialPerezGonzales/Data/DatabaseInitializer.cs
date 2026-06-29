@@ -27,7 +27,7 @@ public class DatabaseInitializer
             m.CommandText = "ALTER TABLE productos ADD COLUMN imagen_data BLOB";
             m.ExecuteNonQuery();
         }
-        catch { /* columna ya existe */ }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Migración imagen_data: {ex.Message}"); }
 
         // Migración: agregar columna fecha_caducidad si no existe
         try
@@ -36,7 +36,7 @@ public class DatabaseInitializer
             m.CommandText = "ALTER TABLE productos ADD COLUMN fecha_caducidad TEXT";
             m.ExecuteNonQuery();
         }
-        catch { /* columna ya existe */ }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Migración fecha_caducidad: {ex.Message}"); }
 
         // Migración: tabla de conversiones de productos
         try
@@ -55,7 +55,7 @@ public class DatabaseInitializer
         CREATE INDEX IF NOT EXISTS idx_conv_base ON producto_conversiones(producto_base_id);";
             m2.ExecuteNonQuery();
         }
-        catch { /* tabla ya existe */ }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Migración producto_conversiones: {ex.Message}"); }
 
         // Migración: corregir índice idx_kardex_ref para incluir producto_id
         try
@@ -70,7 +70,7 @@ public class DatabaseInitializer
                 WHERE referencia_id IS NOT NULL;";
             mIndex.ExecuteNonQuery();
         }
-        catch { }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Migración idx_kardex_ref: {ex.Message}"); }
 
         // Migración: Limpieza de duplicados de Cliente General
         try
@@ -96,7 +96,7 @@ public class DatabaseInitializer
             ";
             m3.ExecuteNonQuery();
         }
-        catch { /* error ignorado */ }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Migración clientes duplicados: {ex.Message}"); }
 
         // Migración: Actualizar check constraint de devoluciones para permitir TRANSFERENCIA
         try
@@ -143,16 +143,18 @@ public class DatabaseInitializer
                 mDev.ExecuteNonQuery();
             }
         }
-        catch { /* error ignorado */ }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Migración devoluciones constraint: {ex.Message}"); }
 
-        // Limpieza de cotizaciones vencidas (mayores a 15 días)
+        // Archivar cotizaciones vencidas (mayores a 15 días) — se marcan ANULADA en vez de eliminarse
         try
         {
             using var m4 = conn.CreateCommand();
-            m4.CommandText = "DELETE FROM ventas WHERE estado = 'COTIZACION' AND datetime(created_at) < datetime('now', 'localtime', '-15 days');";
+            m4.CommandText = @"UPDATE ventas
+                SET estado = 'ANULADA', notas = 'Cotización vencida automáticamente'
+                WHERE estado = 'COTIZACION' AND datetime(created_at) < datetime('now', 'localtime', '-15 days');";
             m4.ExecuteNonQuery();
         }
-        catch { /* error ignorado */ }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Archivado cotizaciones vencidas: {ex.Message}"); }
 
         // Migración: Módulo de Proveedores Avanzado
         try
@@ -168,7 +170,7 @@ public class DatabaseInitializer
             ";
             m5.ExecuteNonQuery();
         }
-        catch { /* columnas ya existen */ }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Migración proveedores columnas: {ex.Message}"); }
 
         try
         {
@@ -228,7 +230,7 @@ public class DatabaseInitializer
             ";
             m6.ExecuteNonQuery();
         }
-        catch { /* error ignorado */ }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Migración tablas proveedores: {ex.Message}"); }
 
         // Migración: agregar columnas de pago combinado a ventas
         try
@@ -237,7 +239,7 @@ public class DatabaseInitializer
             m.CommandText = "ALTER TABLE ventas ADD COLUMN pago_efectivo REAL NOT NULL DEFAULT 0;";
             m.ExecuteNonQuery();
         }
-        catch { /* columna ya existe */ }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Migración pago_efectivo: {ex.Message}"); }
 
         try
         {
@@ -245,7 +247,7 @@ public class DatabaseInitializer
             m.CommandText = "ALTER TABLE ventas ADD COLUMN pago_tarjeta REAL NOT NULL DEFAULT 0;";
             m.ExecuteNonQuery();
         }
-        catch { /* columna ya existe */ }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Migración pago_tarjeta: {ex.Message}"); }
 
         try
         {
@@ -253,7 +255,7 @@ public class DatabaseInitializer
             m.CommandText = "ALTER TABLE ventas ADD COLUMN pago_transferencia REAL NOT NULL DEFAULT 0;";
             m.ExecuteNonQuery();
         }
-        catch { /* columna ya existe */ }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Migración pago_transferencia: {ex.Message}"); }
 
         try
         {
@@ -261,7 +263,7 @@ public class DatabaseInitializer
             m.CommandText = "ALTER TABLE ventas ADD COLUMN referencia_transferencia TEXT;";
             m.ExecuteNonQuery();
         }
-        catch { /* columna ya existe */ }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Migración referencia_transferencia: {ex.Message}"); }
 
 
         // Migración: inicializar valores para ventas existentes si todas las nuevas columnas son 0
@@ -283,7 +285,32 @@ public class DatabaseInitializer
             ";
             m.ExecuteNonQuery();
         }
-        catch { /* error ignorado */ }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Migración ventas pago: {ex.Message}"); }
+
+        // Migración: hashear contraseñas almacenadas en texto plano (SHA-256)
+        try
+        {
+            using var mPass = conn.CreateCommand();
+            mPass.CommandText = "SELECT valor FROM configuracion WHERE clave = 'supervisor_pin'";
+            var pinActual = mPass.ExecuteScalar() as string;
+            if (pinActual != null && !ComercialPerezGonzales.SecurityHelper.IsHashed(pinActual))
+            {
+                mPass.CommandText = "UPDATE configuracion SET valor = @hash WHERE clave = 'supervisor_pin'";
+                mPass.Parameters.AddWithValue("@hash", ComercialPerezGonzales.SecurityHelper.HashPassword(pinActual));
+                mPass.ExecuteNonQuery();
+                mPass.Parameters.Clear();
+            }
+
+            mPass.CommandText = "SELECT valor FROM configuracion WHERE clave = 'pos_password'";
+            var passActual = mPass.ExecuteScalar() as string;
+            if (passActual != null && !ComercialPerezGonzales.SecurityHelper.IsHashed(passActual))
+            {
+                mPass.CommandText = "UPDATE configuracion SET valor = @hash WHERE clave = 'pos_password'";
+                mPass.Parameters.AddWithValue("@hash", ComercialPerezGonzales.SecurityHelper.HashPassword(passActual));
+                mPass.ExecuteNonQuery();
+            }
+        }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Migración password hash: {ex.Message}"); }
     }
 
     private static string GetSchema() => @"

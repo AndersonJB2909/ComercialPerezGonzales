@@ -66,7 +66,7 @@ public partial class App : Application
         services.AddSingleton<PosViewModel>();
         services.AddTransient<ProductosViewModel>();
         services.AddTransient<ClientesViewModel>();
-        services.AddTransient<ProveedoresViewModel>();
+        services.AddSingleton<ProveedoresViewModel>();
         services.AddSingleton<ReportesViewModel>();
         services.AddSingleton<TableroViewModel>();
         services.AddTransient<ConfiguracionImpresionViewModel>();

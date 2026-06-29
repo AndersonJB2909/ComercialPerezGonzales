@@ -89,12 +89,8 @@ public class VentaRepository
     public string GetNextNumero()
     {
         using var conn = _context.CreateConnection();
-        var ultimo = conn.ExecuteScalar<string>("SELECT numero FROM ventas ORDER BY id DESC LIMIT 1");
-        if (ultimo == null) return "V-000001";
-        var partes = ultimo.Split('-');
-        if (partes.Length == 2 && int.TryParse(partes[1], out int num))
-            return $"V-{(num + 1):D6}";
-        return "V-000001";
+        var maxId = conn.ExecuteScalar<int>("SELECT COALESCE(MAX(id), 0) FROM ventas");
+        return $"V-{(maxId + 1):D6}";
     }
 
     public void Anular(int id, string motivo)
@@ -108,8 +104,24 @@ public class VentaRepository
                 "SELECT * FROM detalle_ventas WHERE venta_id = @id", new { id }, tx);
 
             foreach (var d in detalles)
-                conn.Execute("UPDATE productos SET stock = stock + @Cantidad WHERE id = @ProductoId",
-                    new { d.Cantidad, d.ProductoId }, tx);
+            {
+                // Para derivados el stock vive en el producto BASE — restaurar ahí
+                var conv = conn.QueryFirstOrDefault<(int BaseId, double Factor)>(
+                    "SELECT producto_base_id as BaseId, factor as Factor FROM producto_conversiones WHERE producto_id = @ProductoId",
+                    new { d.ProductoId }, tx);
+
+                if (conv != default)
+                {
+                    var cantidadBase = d.Cantidad * (decimal)conv.Factor;
+                    conn.Execute("UPDATE productos SET stock = stock + @Cantidad, updated_at = datetime('now','localtime') WHERE id = @BaseId",
+                        new { Cantidad = cantidadBase, conv.BaseId }, tx);
+                }
+                else
+                {
+                    conn.Execute("UPDATE productos SET stock = stock + @Cantidad, updated_at = datetime('now','localtime') WHERE id = @ProductoId",
+                        new { d.Cantidad, d.ProductoId }, tx);
+                }
+            }
 
             conn.Execute("UPDATE ventas SET estado = 'ANULADA', notas = @motivo WHERE id = @id",
                 new { id, motivo }, tx);

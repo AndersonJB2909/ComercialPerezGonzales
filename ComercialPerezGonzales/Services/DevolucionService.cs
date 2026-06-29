@@ -24,8 +24,12 @@ public class DevolucionService
 
     public bool ValidarPINSupervisor(string pin)
     {
-        var pinGuardado = _configRepo.GetValor("supervisor_pin") ?? "1234";
-        return pinGuardado == pin;
+        var pinGuardado = _configRepo.GetValor("supervisor_pin")
+            ?? SecurityHelper.HashPassword("1234");
+
+        return SecurityHelper.IsHashed(pinGuardado)
+            ? SecurityHelper.HashPassword(pin) == pinGuardado
+            : pin == pinGuardado; // fallback por si la migración aún no corrió
     }
 
     public Devolucion ProcesarDevolucion(int ventaId, int cierreCajaId, string motivo, string metodoReembolso,

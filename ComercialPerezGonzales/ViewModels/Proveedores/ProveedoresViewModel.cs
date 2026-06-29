@@ -346,6 +346,7 @@ public class ProveedoresViewModel : ViewModelBase
             {
                 ProveedorId = _selected.Id,
                 Estado = "BORRADOR",
+                FechaEmision = DateTime.Now,
                 Notas = _notasOrden,
                 Detalles = DetallesNuevaOrden.ToList()
             });

@@ -14,6 +14,7 @@ public class PosViewModel : ViewModelBase
     private readonly VentaService _ventaService;
     private readonly ConfiguracionRepository _configRepo;
     private readonly CierreCajaService _cierreService;
+    private readonly ProductoConversionService _conversionService;
 
     private string _searchText = string.Empty;
     private string _clienteSearch = string.Empty;
@@ -165,13 +166,14 @@ public class PosViewModel : ViewModelBase
     public RelayCommand IrFlujoCajaCommand { get; }
     public RelayCommand ActualizarProductosCommand { get; }
 
-    public PosViewModel(ProductoService productoService, ClienteService clienteService, VentaService ventaService, ConfiguracionRepository configRepo, CierreCajaService cierreService)
+    public PosViewModel(ProductoService productoService, ClienteService clienteService, VentaService ventaService, ConfiguracionRepository configRepo, CierreCajaService cierreService, ProductoConversionService conversionService)
     {
         _productoService = productoService;
         _clienteService = clienteService;
         _ventaService = ventaService;
         _configRepo = configRepo;
         _cierreService = cierreService;
+        _conversionService = conversionService;
 
         AgregarProductoCommand = new RelayCommand(param => AgregarProducto(param as Producto));
         IncrementarItemCommand = new RelayCommand(param => IncrementarItem(param as ItemCarrito));
@@ -347,6 +349,15 @@ public class PosViewModel : ViewModelBase
     private void IncrementarItem(ItemCarrito? item)
     {
         if (item == null) return;
+        try
+        {
+            _conversionService.ValidarStockSuficiente(item.ProductoId, item.Cantidad + 1);
+        }
+        catch (InvalidOperationException ex)
+        {
+            AppDialog.Show(ex.Message, "Stock Insuficiente", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
         item.Cantidad++;
         item.OnCantidadChanged();
         RecalcularTotales();
@@ -509,7 +520,7 @@ public class PosViewModel : ViewModelBase
                 NumeroVenta   = venta.Numero,
                 FechaVenta    = DateTime.Now,
                 TotalVenta    = venta.Total,
-                Subtotal      = venta.Subtotal + CartItems.Sum(i => i.Descuento),
+                Subtotal      = CartItems.Sum(i => i.Cantidad * i.PrecioUnit),
                 Descuento     = venta.Descuento + CartItems.Sum(i => i.Descuento),
                 MontoPagado   = pagoVm.MontoPagado,
                 MetodoPago    = pagoVm.MetodoPago,
@@ -597,7 +608,7 @@ public class PosViewModel : ViewModelBase
                 NumeroVenta   = cotizacion.Numero,
                 FechaVenta    = DateTime.Now,
                 TotalVenta    = cotizacion.Total,
-                Subtotal      = cotizacion.Subtotal + CartItems.Sum(i => i.Descuento),
+                Subtotal      = CartItems.Sum(i => i.Cantidad * i.PrecioUnit),
                 Descuento     = cotizacion.Descuento + CartItems.Sum(i => i.Descuento),
                 MontoPagado   = 0,
                 MetodoPago    = "COTIZACION",
