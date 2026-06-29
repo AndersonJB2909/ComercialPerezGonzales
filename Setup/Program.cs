@@ -175,9 +175,51 @@ class Program
             CrearAccesoDirecto(exePath, desktopShortcut, installPath);
             CrearAccesoDirecto(exePath, startMenuShortcut, installPath);
 
+            // 4. Crear desinstalador .bat
+            string uninstallBatPath = Path.Combine(installPath, "Desinstalar.bat");
+            string uninstallContent = @"@echo off
+title Desinstalador - Comercial Gonzalez Perez POS
+echo ===================================================================
+echo             DESINSTALADOR - COMERCIAL GONZALEZ PEREZ
+echo ===================================================================
+echo.
+echo Este script removera el Punto de Venta de su equipo.
+echo.
+set /p CONFIRM=""¿Esta seguro que desea desinstalar el sistema? (s/N): ""
+if /i ""%CONFIRM%"" neq ""s"" if /i ""%CONFIRM%"" neq ""si"" (
+    echo Desinstalacion cancelada.
+    pause
+    exit /b
+)
+
+echo.
+echo Eliminando accesos directos...
+del /f /q ""%USERPROFILE%\Desktop\Punto de Venta Comercial Gonzalez Perez.lnk"" >nul 2>&1
+del /f /q ""%APPDATA%\Microsoft\Windows\Start Menu\Programs\Punto de Venta Comercial Gonzalez Perez.lnk"" >nul 2>&1
+
+set /p DELDB=""¿Desea eliminar la base de datos de ventas e historial? (s/N): ""
+if /i ""%DELDB%""==""s"" (
+    echo Eliminando base de datos local...
+    rd /s /q ""%LOCALAPPDATA%\ComercialPerezGonzales"" >nul 2>&1
+)
+
+echo.
+echo Desinstalacion completada con exito.
+echo.
+echo Para completar la limpieza, la carpeta de la aplicacion se borrara ahora.
+echo Presione una tecla para cerrar y limpiar...
+pause
+
+:: Auto-eliminacion de la propia carpeta en segundo plano despues de salir
+start """" cmd /c ""timeout /t 2 /nobreak >nul && rd /s /q """"%~dp0""""""
+exit
+";
+            File.WriteAllText(uninstallBatPath, uninstallContent);
+
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("✓ Acceso directo creado en el Escritorio.");
             Console.WriteLine("✓ Acceso directo creado en el Menú Inicio.");
+            Console.WriteLine("✓ Creado desinstalador Desinstalar.bat en la carpeta de instalación.");
             Console.WriteLine();
             Console.ForegroundColor = ConsoleColor.Cyan;
             Console.WriteLine("===================================================================");
