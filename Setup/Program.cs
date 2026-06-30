@@ -11,13 +11,9 @@ class Program
 {
     static void Main(string[] args)
     {
-        try
-        {
-            Console.Title = "Instalador - Comercial González Pérez";
-            Console.Clear();
-            Console.ForegroundColor = ConsoleColor.Cyan;
-        }
-        catch (Exception) { /* Ignorar errores de consola en entornos no interactivos o headless */ }
+        Console.Title = "Instalador - Comercial González Pérez";
+        Console.Clear();
+        Console.ForegroundColor = ConsoleColor.Cyan;
 
         // Arte ASCII de la empresa
         Console.WriteLine(@"
