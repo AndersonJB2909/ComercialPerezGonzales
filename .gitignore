@@ -16,3 +16,8 @@ packages/
 *.db
 *.sqlite
 ponytail/
+
+# Large installer / build artifacts
+Setup/app.zip
+installer_dist/
+
